@@ -9,90 +9,52 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/icons/icon-72x72.svg",
-      "sizes": "72x72",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-96x96.svg",
-      "sizes": "96x96",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-128x128.svg",
-      "sizes": "128x128",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-144x144.svg",
-      "sizes": "144x144",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-152x152.svg",
-      "sizes": "152x152",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-192x192.svg",
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "/icons/icon-384x384.svg",
-      "sizes": "384x384",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-512x512.svg",
+      "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "categories": ["social", "communication"],
-  "screenshots": [
-    {
-      "src": "/screenshots/feed.png",
-      "sizes": "1080x1920",
-      "type": "image/png",
-      "form_factor": "narrow"
-    },
-    {
-      "src": "/screenshots/desktop.png",
-      "sizes": "1920x1080",
-      "type": "image/png",
-      "form_factor": "wide"
-    }
-  ],
   "shortcuts": [
     {
       "name": "Feed",
       "short_name": "Feed",
       "description": "View your social feed",
       "url": "/app/feed",
-      "icons": [{ "src": "/icons/icon-96x96.svg", "sizes": "96x96", "type": "image/svg+xml" }]
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Compose",
       "short_name": "Post",
       "description": "Create a new post",
       "url": "/app/compose",
-      "icons": [{ "src": "/icons/icon-96x96.svg", "sizes": "96x96", "type": "image/svg+xml" }]
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Messages",
       "short_name": "Messages",
       "description": "View your messages",
       "url": "/app/messages",
-      "icons": [{ "src": "/icons/icon-96x96.svg", "sizes": "96x96", "type": "image/svg+xml" }]
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

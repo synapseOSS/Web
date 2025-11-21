@@ -14,6 +14,7 @@ import { LandingLayoutComponent } from './layouts/landing-layout.component';
 import { FeedComponent } from './pages/feed.component';
 import { MessagesComponent } from './pages/messages.component';
 import { ProfileComponent } from './pages/profile.component';
+import { EditProfileComponent } from './pages/edit-profile.component';
 import { ComposeComponent } from './pages/compose.component';
 import { PostDetailComponent } from './pages/post-detail.component';
 import { AboutComponent } from './pages/about.component';
@@ -31,6 +32,7 @@ export const routes: Routes = [
       { path: 'messages', component: MessagesComponent },
       { path: 'profile', component: ProfileComponent },
       { path: 'profile/:username', component: ProfileComponent },
+      { path: 'edit-profile', component: EditProfileComponent },
       { path: 'compose', component: ComposeComponent },
       { path: 'post/:id', component: PostDetailComponent }
     ]

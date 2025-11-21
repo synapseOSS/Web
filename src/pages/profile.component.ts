@@ -60,7 +60,7 @@ import { AuthService } from '../services/auth.service';
                    </button>
                  }
                } @else {
-                 <button (click)="startEditing()" class="px-6 py-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold hover:opacity-90 transition-opacity">
+                 <button (click)="navigateToEditProfile()" class="px-6 py-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold hover:opacity-90 transition-opacity">
                     Edit Profile
                  </button>
                }
@@ -454,6 +454,10 @@ export class ProfileComponent implements OnInit {
     }
 
     this.isUploadingCover.set(false);
+  }
+
+  navigateToEditProfile() {
+    this.router.navigate(['/app/edit-profile']);
   }
 
   goBack() {
