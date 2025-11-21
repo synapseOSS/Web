@@ -167,52 +167,84 @@ export class ProfileService {
 
   async uploadAvatar(file: File): Promise<string | null> {
     const user = this.auth.currentUser();
-    if (!user) return null;
+    if (!user) {
+      console.error('No authenticated user');
+      return null;
+    }
 
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
 
-      const { error: uploadError } = await this.supabase.storage
-        .from('profiles')
-        .upload(filePath, file);
+      console.log('Uploading avatar to:', filePath);
 
-      if (uploadError) throw uploadError;
+      // Try user-media bucket first (same as stories)
+      const { error: uploadError, data: uploadData } = await this.supabase.storage
+        .from('user-media')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('Upload successful:', uploadData);
 
       const { data } = this.supabase.storage
-        .from('profiles')
+        .from('user-media')
         .getPublicUrl(filePath);
 
+      console.log('Public URL:', data.publicUrl);
       return data.publicUrl;
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error uploading avatar:', err);
+      this.error.set(err.message || 'Failed to upload avatar');
       return null;
     }
   }
 
   async uploadCoverImage(file: File): Promise<string | null> {
     const user = this.auth.currentUser();
-    if (!user) return null;
+    if (!user) {
+      console.error('No authenticated user');
+      return null;
+    }
 
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}-cover-${Date.now()}.${fileExt}`;
       const filePath = `covers/${fileName}`;
 
-      const { error: uploadError } = await this.supabase.storage
-        .from('profiles')
-        .upload(filePath, file);
+      console.log('Uploading cover to:', filePath);
 
-      if (uploadError) throw uploadError;
+      // Try user-media bucket first (same as stories)
+      const { error: uploadError, data: uploadData } = await this.supabase.storage
+        .from('user-media')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('Upload successful:', uploadData);
 
       const { data } = this.supabase.storage
-        .from('profiles')
+        .from('user-media')
         .getPublicUrl(filePath);
 
+      console.log('Public URL:', data.publicUrl);
       return data.publicUrl;
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error uploading cover image:', err);
+      this.error.set(err.message || 'Failed to upload cover image');
       return null;
     }
   }
