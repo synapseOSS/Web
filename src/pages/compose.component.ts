@@ -470,10 +470,8 @@ export class ComposeComponent {
     
     try {
       // Determine post type
-      let postType = 'TEXT';
-      if (this.poll()) {
-        postType = 'POLL';
-      } else if (this.mediaItems().length > 0) {
+      let postType: 'TEXT' | 'IMAGE' | 'VIDEO' = 'TEXT';
+      if (this.mediaItems().length > 0) {
         postType = this.mediaItems().some(m => m.type === 'VIDEO') ? 'VIDEO' : 'IMAGE';
       }
 
