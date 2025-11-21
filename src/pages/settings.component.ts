@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { IconComponent } from '../components/icon.component';
-import { ImageUploadService, ImageProvider, ProviderConfig } from '../services/image-upload.service';
+import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../services/image-upload.service';
 
 @Component({
   selector: 'app-settings',
@@ -20,62 +20,69 @@ import { ImageUploadService, ImageProvider, ProviderConfig } from '../services/i
       </div>
 
       <div class="px-4 py-6 space-y-6 max-w-2xl">
-        <!-- Provider Selection -->
+        <!-- Provider Selection by File Type -->
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 space-y-4">
           <div class="flex items-start gap-3">
             <div class="p-2 bg-purple-100 dark:bg-purple-950 rounded-lg">
               <app-icon name="cloud" [size]="24" class="text-purple-600 dark:text-purple-400"></app-icon>
             </div>
             <div class="flex-1">
-              <h2 class="font-bold text-lg text-slate-900 dark:text-white mb-1">Image Upload Provider</h2>
+              <h2 class="font-bold text-lg text-slate-900 dark:text-white mb-1">Upload Providers by File Type</h2>
               <p class="text-sm text-slate-600 dark:text-slate-400">
-                Choose your preferred image hosting service
+                Choose different providers for photos, videos, and other files
               </p>
             </div>
           </div>
 
-          <div class="space-y-3">
-            @for (provider of providers; track provider.id) {
-              <div 
-                (click)="selectProvider(provider.id)"
-                [class.border-indigo-500]="selectedProvider() === provider.id"
-                [class.bg-indigo-50]="selectedProvider() === provider.id"
-                [class.dark:bg-indigo-950/30]="selectedProvider() === provider.id"
-                class="border-2 border-slate-200 dark:border-slate-700 rounded-lg p-4 cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 transition-all">
-                <div class="flex items-start gap-3">
-                  <div class="flex-shrink-0 mt-0.5">
-                    @if (selectedProvider() === provider.id) {
-                      <div class="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center">
-                        <app-icon name="check" [size]="14" class="text-white"></app-icon>
-                      </div>
-                    } @else {
-                      <div class="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-600"></div>
-                    }
-                  </div>
-                  <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-1">
-                      <h3 class="font-semibold text-slate-900 dark:text-white">{{ provider.name }}</h3>
-                      @if (isProviderConfigured(provider.id)) {
-                        <span class="text-xs bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full font-medium">
-                          Configured
-                        </span>
-                      } @else if (provider.id !== 'imgbb') {
-                        <span class="text-xs bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full font-medium">
-                          Setup Required
-                        </span>
-                      }
-                    </div>
-                    <p class="text-sm text-slate-600 dark:text-slate-400">{{ provider.description }}</p>
-                  </div>
-                </div>
-              </div>
-            }
+          <!-- Photo Provider -->
+          <div class="space-y-2">
+            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+              📷 Photo Provider
+            </label>
+            <select 
+              [(ngModel)]="photoProvider"
+              (change)="onProviderChange()"
+              class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-3 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all">
+              @for (provider of providers; track provider.id) {
+                <option [value]="provider.id">{{ provider.name }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Video Provider -->
+          <div class="space-y-2">
+            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+              🎥 Video Provider
+            </label>
+            <select 
+              [(ngModel)]="videoProvider"
+              (change)="onProviderChange()"
+              class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-3 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all">
+              @for (provider of providers; track provider.id) {
+                <option [value]="provider.id">{{ provider.name }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Other Files Provider -->
+          <div class="space-y-2">
+            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+              📄 Other Files Provider
+            </label>
+            <select 
+              [(ngModel)]="otherProvider"
+              (change)="onProviderChange()"
+              class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-3 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all">
+              @for (provider of providers; track provider.id) {
+                <option [value]="provider.id">{{ provider.name }}</option>
+              }
+            </select>
           </div>
         </div>
 
         <!-- Provider Configuration -->
-        @switch (selectedProvider()) {
-          @case ('imgbb') {
+        @if (needsConfiguration()) {
+          @if (photoProvider === 'imgbb' || videoProvider === 'imgbb' || otherProvider === 'imgbb') {
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 space-y-4">
               <div class="flex items-start gap-3">
                 <div class="p-2 bg-indigo-100 dark:bg-indigo-950 rounded-lg">
@@ -128,7 +135,7 @@ import { ImageUploadService, ImageProvider, ProviderConfig } from '../services/i
             </div>
           }
           
-          @case ('cloudinary') {
+          @if (photoProvider === 'cloudinary' || videoProvider === 'cloudinary' || otherProvider === 'cloudinary') {
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 space-y-4">
               <div class="flex items-start gap-3">
                 <div class="p-2 bg-blue-100 dark:bg-blue-950 rounded-lg">
@@ -145,10 +152,24 @@ import { ImageUploadService, ImageProvider, ProviderConfig } from '../services/i
                 </div>
               </div>
 
+              <div class="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
+                <div class="flex gap-3">
+                  <div class="flex-shrink-0">
+                    <app-icon name="check-circle" [size]="18" class="text-green-600 dark:text-green-400"></app-icon>
+                  </div>
+                  <div class="text-sm text-green-900 dark:text-green-100">
+                    <p class="font-semibold mb-1">Default Configuration Active</p>
+                    <p class="text-green-700 dark:text-green-300">
+                      Cloudinary is ready to use with default credentials. You can optionally configure your own account below.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div class="space-y-4">
                 <div>
                   <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                    Cloud Name
+                    Cloud Name (Optional)
                   </label>
                   <input 
                     [(ngModel)]="cloudinaryConfig.cloudName" 
@@ -159,7 +180,7 @@ import { ImageUploadService, ImageProvider, ProviderConfig } from '../services/i
 
                 <div>
                   <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                    Upload Preset
+                    Upload Preset (Optional)
                   </label>
                   <input 
                     [(ngModel)]="cloudinaryConfig.uploadPreset" 
@@ -167,6 +188,14 @@ import { ImageUploadService, ImageProvider, ProviderConfig } from '../services/i
                     class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-3 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
                     placeholder="your-upload-preset">
                 </div>
+
+                @if (hasCustomConfig('cloudinary')) {
+                  <button 
+                    (click)="clearCloudinaryConfig()"
+                    class="w-full px-4 py-2.5 rounded-lg font-semibold border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    Reset to Default
+                  </button>
+                }
               </div>
 
               <div class="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
@@ -178,7 +207,7 @@ import { ImageUploadService, ImageProvider, ProviderConfig } from '../services/i
                     <ul class="space-y-1 text-blue-700 dark:text-blue-300">
                       <li>• Free tier: 25 GB storage, 25 GB bandwidth/month</li>
                       <li>• Create an unsigned upload preset in settings</li>
-                      <li>• Automatic image optimization</li>
+                      <li>• Automatic image optimization and transformations</li>
                     </ul>
                   </div>
                 </div>
@@ -186,7 +215,7 @@ import { ImageUploadService, ImageProvider, ProviderConfig } from '../services/i
             </div>
           }
 
-          @case ('cloudflare-r2') {
+          @if (photoProvider === 'cloudflare-r2' || videoProvider === 'cloudflare-r2' || otherProvider === 'cloudflare-r2') {
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 space-y-4">
               <div class="flex items-start gap-3">
                 <div class="p-2 bg-orange-100 dark:bg-orange-950 rounded-lg">
@@ -339,7 +368,10 @@ export class SettingsComponent implements OnInit {
   private router = inject(Router);
   private imageUploadService = inject(ImageUploadService);
   
-  selectedProvider = signal<ImageProvider>('imgbb');
+  photoProvider: ImageProvider = 'imgbb';
+  videoProvider: ImageProvider = 'imgbb';
+  otherProvider: ImageProvider = 'imgbb';
+  
   showSecrets = {
     imgbb: signal(false),
     cloudflare: signal(false)
@@ -353,17 +385,17 @@ export class SettingsComponent implements OnInit {
     {
       id: 'imgbb' as ImageProvider,
       name: 'ImgBB',
-      description: 'Free unlimited image hosting with 32MB file size limit'
+      description: 'Free unlimited image hosting (Default)'
     },
     {
       id: 'cloudinary' as ImageProvider,
       name: 'Cloudinary',
-      description: 'Professional image hosting with optimization and transformations'
+      description: 'Professional image hosting with optimization'
     },
     {
       id: 'cloudflare-r2' as ImageProvider,
       name: 'Cloudflare R2',
-      description: 'S3-compatible object storage with zero egress fees'
+      description: 'S3-compatible object storage'
     }
   ];
 
@@ -389,7 +421,11 @@ export class SettingsComponent implements OnInit {
   }
 
   loadConfiguration() {
-    this.selectedProvider.set(this.imageUploadService.getProvider());
+    const providers = this.imageUploadService.getProviders();
+    this.photoProvider = providers.photo;
+    this.videoProvider = providers.video;
+    this.otherProvider = providers.other;
+    
     const config = this.imageUploadService.getConfig();
 
     if (config.imgbb) {
@@ -410,8 +446,12 @@ export class SettingsComponent implements OnInit {
     }
   }
 
-  selectProvider(provider: ImageProvider) {
-    this.selectedProvider.set(provider);
+  onProviderChange() {
+    // Trigger UI update when provider selection changes
+  }
+
+  needsConfiguration(): boolean {
+    return true; // Always show configuration sections
   }
 
   toggleSecret(provider: 'imgbb' | 'cloudflare') {
@@ -422,16 +462,33 @@ export class SettingsComponent implements OnInit {
     return this.imageUploadService.isProviderConfigured(provider);
   }
 
-  saveConfiguration() {
-    const provider = this.selectedProvider();
+  hasCustomConfig(provider: ImageProvider): boolean {
+    return this.imageUploadService.hasCustomConfig(provider);
+  }
 
-    // Validate configuration
-    if (provider === 'cloudinary') {
-      if (!this.cloudinaryConfig.cloudName.trim() || !this.cloudinaryConfig.uploadPreset.trim()) {
-        this.showError('Please fill in all Cloudinary fields');
+  clearCloudinaryConfig() {
+    this.cloudinaryConfig.cloudName = '';
+    this.cloudinaryConfig.uploadPreset = '';
+    this.showSuccess('Cloudinary reset to default configuration');
+  }
+
+  saveConfiguration() {
+    // Validate Cloudinary if used
+    const usesCloudinary = this.photoProvider === 'cloudinary' || this.videoProvider === 'cloudinary' || this.otherProvider === 'cloudinary';
+    if (usesCloudinary) {
+      if (this.cloudinaryConfig.cloudName.trim() && !this.cloudinaryConfig.uploadPreset.trim()) {
+        this.showError('Upload preset is required when using custom cloud name');
         return;
       }
-    } else if (provider === 'cloudflare-r2') {
+      if (!this.cloudinaryConfig.cloudName.trim() && this.cloudinaryConfig.uploadPreset.trim()) {
+        this.showError('Cloud name is required when using custom upload preset');
+        return;
+      }
+    }
+
+    // Validate R2 if used
+    const usesR2 = this.photoProvider === 'cloudflare-r2' || this.videoProvider === 'cloudflare-r2' || this.otherProvider === 'cloudflare-r2';
+    if (usesR2) {
       if (!this.cloudflareConfig.accountId.trim() || !this.cloudflareConfig.accessKeyId.trim() || 
           !this.cloudflareConfig.secretAccessKey.trim() || !this.cloudflareConfig.bucketName.trim()) {
         this.showError('Please fill in all Cloudflare R2 fields');
@@ -468,7 +525,11 @@ export class SettingsComponent implements OnInit {
 
       // Save configuration
       this.imageUploadService.saveConfig(config);
-      this.imageUploadService.setProvider(provider);
+      
+      // Save provider selections for each file type
+      this.imageUploadService.setProviderForType('photo', this.photoProvider);
+      this.imageUploadService.setProviderForType('video', this.videoProvider);
+      this.imageUploadService.setProviderForType('other', this.otherProvider);
 
       this.showSuccess('Configuration saved successfully!');
     } catch (err) {

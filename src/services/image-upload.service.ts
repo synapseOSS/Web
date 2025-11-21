@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 
 export type ImageProvider = 'imgbb' | 'cloudinary' | 'cloudflare-r2';
+export type FileType = 'photo' | 'video' | 'other';
 
 export interface ProviderConfig {
   imgbb?: {
@@ -9,6 +10,8 @@ export interface ProviderConfig {
   cloudinary?: {
     cloudName: string;
     uploadPreset: string;
+    apiKey?: string;
+    apiSecret?: string;
   };
   cloudflareR2?: {
     accountId: string;
@@ -19,29 +22,84 @@ export interface ProviderConfig {
   };
 }
 
+export interface FileTypeProviders {
+  photo: ImageProvider;
+  video: ImageProvider;
+  other: ImageProvider;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class ImageUploadService {
-  private readonly STORAGE_KEY_PROVIDER = 'image_upload_provider';
+  private readonly STORAGE_KEY_PROVIDERS = 'file_type_providers';
   private readonly STORAGE_KEY_CONFIG = 'image_upload_config';
   
-  private readonly DEFAULT_PROVIDER: ImageProvider = 'imgbb';
   private readonly DEFAULT_IMGBB_KEY = 'faa85ffbac0217ff67b5f3c4baa7fb29';
+  
+  // Default providers for each file type
+  private readonly DEFAULT_PROVIDERS: FileTypeProviders = {
+    photo: 'imgbb',
+    video: 'imgbb',
+    other: 'imgbb'
+  };
+  
+  // Default Cloudinary credentials
+  private readonly DEFAULT_CLOUDINARY = {
+    cloudName: 'djw3fgbls',
+    apiKey: '577882927131931',
+    apiSecret: 'M_w_0uQKjnLRUe-u34driUBqUQU',
+    uploadPreset: 'synapse'
+  };
+
+  // Default Cloudflare R2 credentials
+  private readonly DEFAULT_R2 = {
+    accountId: '76bea77fbdac3cdf71e6cf580f270ea6',
+    accessKeyId: '1a7483b896a499683eef773b81a69500',
+    secretAccessKey: '4a7971790a79ca0a64fc757e92376c3d0a4e09295c27c0bff9d11c7042a0fa2c',
+    bucketName: 'synapse',
+    endpoint: 'https://76bea77fbdac3cdf71e6cf580f270ea6.r2.cloudflarestorage.com'
+  };
 
   /**
-   * Get the currently selected provider
+   * Get file type from file
    */
-  getProvider(): ImageProvider {
-    const stored = localStorage.getItem(this.STORAGE_KEY_PROVIDER);
-    return (stored as ImageProvider) || this.DEFAULT_PROVIDER;
+  private getFileType(file: File): FileType {
+    if (file.type.startsWith('image/')) return 'photo';
+    if (file.type.startsWith('video/')) return 'video';
+    return 'other';
   }
 
   /**
-   * Set the image upload provider
+   * Get providers for each file type
    */
-  setProvider(provider: ImageProvider): void {
-    localStorage.setItem(this.STORAGE_KEY_PROVIDER, provider);
+  getProviders(): FileTypeProviders {
+    const stored = localStorage.getItem(this.STORAGE_KEY_PROVIDERS);
+    if (stored) {
+      try {
+        return { ...this.DEFAULT_PROVIDERS, ...JSON.parse(stored) };
+      } catch {
+        return this.DEFAULT_PROVIDERS;
+      }
+    }
+    return this.DEFAULT_PROVIDERS;
+  }
+
+  /**
+   * Set provider for a specific file type
+   */
+  setProviderForType(fileType: FileType, provider: ImageProvider): void {
+    const providers = this.getProviders();
+    providers[fileType] = provider;
+    localStorage.setItem(this.STORAGE_KEY_PROVIDERS, JSON.stringify(providers));
+  }
+
+  /**
+   * Get provider for a specific file type
+   */
+  getProviderForType(fileType: FileType): ImageProvider {
+    const providers = this.getProviders();
+    return providers[fileType];
   }
 
   /**
@@ -67,10 +125,11 @@ export class ImageUploadService {
   }
 
   /**
-   * Upload image using the selected provider
+   * Upload file using the provider configured for its type
    */
   async uploadImage(file: File, name?: string): Promise<string | null> {
-    const provider = this.getProvider();
+    const fileType = this.getFileType(file);
+    const provider = this.getProviderForType(fileType);
     
     switch (provider) {
       case 'imgbb':
@@ -139,17 +198,16 @@ export class ImageUploadService {
     try {
       const config = this.getConfig();
       
-      if (!config.cloudinary?.cloudName || !config.cloudinary?.uploadPreset) {
-        console.error('Cloudinary not configured');
-        return null;
-      }
+      // Use custom config if available, otherwise use defaults
+      const cloudName = config.cloudinary?.cloudName || this.DEFAULT_CLOUDINARY.cloudName;
+      const uploadPreset = config.cloudinary?.uploadPreset || this.DEFAULT_CLOUDINARY.uploadPreset;
 
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('upload_preset', config.cloudinary.uploadPreset);
+      formData.append('upload_preset', uploadPreset);
 
       const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${config.cloudinary.cloudName}/image/upload`,
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
         {
           method: 'POST',
           body: formData
@@ -157,7 +215,8 @@ export class ImageUploadService {
       );
 
       if (!response.ok) {
-        console.error('Cloudinary upload failed');
+        const errorData = await response.json();
+        console.error('Cloudinary upload failed:', errorData);
         return null;
       }
 
@@ -176,11 +235,12 @@ export class ImageUploadService {
     try {
       const config = this.getConfig();
       
-      if (!config.cloudflareR2?.accountId || !config.cloudflareR2?.accessKeyId || 
-          !config.cloudflareR2?.secretAccessKey || !config.cloudflareR2?.bucketName) {
-        console.error('Cloudflare R2 not configured');
-        return null;
-      }
+      // Use custom config if available, otherwise use defaults
+      const accountId = config.cloudflareR2?.accountId || this.DEFAULT_R2.accountId;
+      const accessKeyId = config.cloudflareR2?.accessKeyId || this.DEFAULT_R2.accessKeyId;
+      const secretAccessKey = config.cloudflareR2?.secretAccessKey || this.DEFAULT_R2.secretAccessKey;
+      const bucketName = config.cloudflareR2?.bucketName || this.DEFAULT_R2.bucketName;
+      const endpoint = this.DEFAULT_R2.endpoint;
 
       // Generate unique filename
       const timestamp = Date.now();
@@ -195,7 +255,6 @@ export class ImageUploadService {
       
       console.warn('Cloudflare R2 direct upload requires backend implementation');
       console.log('File ready for upload:', filename);
-      
       // For now, return null - this needs backend support
       return null;
     } catch (error) {
@@ -243,16 +302,31 @@ export class ImageUploadService {
    * Check if provider is configured
    */
   isProviderConfigured(provider: ImageProvider): boolean {
-    const config = this.getConfig();
-    
     switch (provider) {
       case 'imgbb':
         return true; // Always available with default key
       case 'cloudinary':
+        return true; // Always available with default credentials
+      case 'cloudflare-r2':
+        return true; // Always available with default credentials
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Check if user has custom configuration for a provider
+   */
+  hasCustomConfig(provider: ImageProvider): boolean {
+    const config = this.getConfig();
+    
+    switch (provider) {
+      case 'imgbb':
+        return !!(config.imgbb?.apiKey);
+      case 'cloudinary':
         return !!(config.cloudinary?.cloudName && config.cloudinary?.uploadPreset);
       case 'cloudflare-r2':
-        return !!(config.cloudflareR2?.accountId && config.cloudflareR2?.accessKeyId && 
-                 config.cloudflareR2?.secretAccessKey && config.cloudflareR2?.bucketName);
+        return !!(config.cloudflareR2?.accountId);
       default:
         return false;
     }
