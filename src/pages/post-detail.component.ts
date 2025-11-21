@@ -3,12 +3,13 @@ import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IconComponent } from '../components/icon.component';
+import { CommentSectionComponent } from '../components/comment-section.component';
 import { SocialService, Post } from '../services/social.service';
 
 @Component({
   selector: 'app-post-detail',
   standalone: true,
-  imports: [CommonModule, IconComponent],
+  imports: [CommonModule, IconComponent, CommentSectionComponent],
   template: `
     <div class="min-h-screen bg-white dark:bg-slate-950 border-x border-slate-200 dark:border-white/10">
       
@@ -96,32 +97,8 @@ import { SocialService, Post } from '../services/social.service';
               </button>
            </div>
 
-           <!-- Comments Section (Mock) -->
-           <div class="p-4">
-              <h3 class="font-bold text-slate-900 dark:text-white mb-4">Comments</h3>
-              
-              <!-- Input -->
-              <div class="flex gap-3 mb-6">
-                 <img [src]="socialService.currentUser().avatar" class="w-10 h-10 rounded-full object-cover">
-                 <input type="text" placeholder="Post your reply" class="flex-1 bg-slate-100 dark:bg-slate-900 border-none rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 dark:text-white">
-              </div>
-
-              <!-- Mock Comment -->
-              <div class="flex gap-3">
-                 <div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex-shrink-0"></div>
-                 <div>
-                    <div class="flex gap-2 items-center">
-                       <span class="font-bold text-slate-900 dark:text-white text-sm">Jane Doe</span>
-                       <span class="text-slate-500 text-xs">@janedoe · 2h</span>
-                    </div>
-                    <p class="text-slate-800 dark:text-slate-300 text-sm mt-1">This looks amazing! Can't wait to try it out.</p>
-                    <div class="flex gap-4 mt-2 text-slate-500 text-xs">
-                       <button class="hover:text-indigo-500">Reply</button>
-                       <button class="hover:text-pink-500">Like</button>
-                    </div>
-                 </div>
-              </div>
-           </div>
+           <!-- Comments Section -->
+           <app-comment-section [postId]="p.id"></app-comment-section>
         </div>
       } @else {
          <div class="p-8 text-center text-slate-500">

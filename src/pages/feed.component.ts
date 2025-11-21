@@ -1,5 +1,5 @@
 
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -7,6 +7,7 @@ import { IconComponent } from '../components/icon.component';
 import { SocialService } from '../services/social.service';
 import { PostCardComponent } from '../components/post-card.component';
 import { StoryRailComponent } from '../components/story-rail.component';
+import { RealtimeService } from '../services/realtime.service';
 
 @Component({
   selector: 'app-feed',
@@ -16,8 +17,26 @@ import { StoryRailComponent } from '../components/story-rail.component';
     <div class="border-x border-slate-200 dark:border-white/10 min-h-screen">
       <!-- Header -->
       <div class="sticky top-0 z-20 backdrop-blur-md bg-white/80 dark:bg-slate-950/80 border-b border-slate-200 dark:border-white/10 px-4 py-3 cursor-pointer transition-all" (click)="scrollToTop()">
-        <h1 class="text-xl font-bold text-slate-900 dark:text-white">Home</h1>
+        <div class="flex items-center justify-between">
+          <h1 class="text-xl font-bold text-slate-900 dark:text-white">Home</h1>
+          @if (realtimeService.isConnected()) {
+            <div class="flex items-center gap-2 text-xs text-green-500">
+              <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span>Live</span>
+            </div>
+          }
+        </div>
       </div>
+
+      <!-- New Posts Banner -->
+      @if (newPostsCount() > 0) {
+        <button 
+          (click)="loadNewPosts()"
+          class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition-colors flex items-center justify-center gap-2">
+          <app-icon name="arrow-up" [size]="16"></app-icon>
+          {{ newPostsCount() }} new {{ newPostsCount() === 1 ? 'post' : 'posts' }}
+        </button>
+      }
 
       <!-- Stories -->
       <app-story-rail></app-story-rail>
@@ -47,12 +66,32 @@ import { StoryRailComponent } from '../components/story-rail.component';
     </div>
   `
 })
-export class FeedComponent implements OnInit {
+export class FeedComponent implements OnInit, OnDestroy {
   socialService = inject(SocialService);
+  realtimeService = inject(RealtimeService);
+  
   posts = this.socialService.posts;
+  newPostsCount = signal(0);
+  pendingPosts: any[] = [];
 
   ngOnInit() {
-    // Data is loaded by signal in service
+    // Subscribe to real-time feed updates
+    this.realtimeService.subscribeToFeed((newPost) => {
+      this.pendingPosts.unshift(newPost);
+      this.newPostsCount.set(this.pendingPosts.length);
+    });
+  }
+
+  ngOnDestroy() {
+    this.realtimeService.unsubscribe('feed');
+  }
+
+  loadNewPosts() {
+    // Add pending posts to the feed
+    this.socialService.posts.update(posts => [...this.pendingPosts, ...posts]);
+    this.pendingPosts = [];
+    this.newPostsCount.set(0);
+    this.scrollToTop();
   }
 
   scrollToTop() {

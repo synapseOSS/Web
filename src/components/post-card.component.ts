@@ -3,19 +3,21 @@ import { Component, input, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { IconComponent } from './icon.component';
+import { ReactionPickerComponent, ReactionType } from './reaction-picker.component';
+import { ActionMenuComponent, MenuItem } from './action-menu.component';
 import { Post } from '../services/social.service';
 
 @Component({
   selector: 'app-post-card',
   standalone: true,
-  imports: [CommonModule, IconComponent],
+  imports: [CommonModule, IconComponent, ReactionPickerComponent, ActionMenuComponent],
   template: `
-    <div class="p-4 border-b border-slate-200 dark:border-white/10 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors cursor-pointer animate-in fade-in duration-300" (click)="navigateToDetail()">
-      <div class="flex gap-3">
+    <div class="p-3 sm:p-4 border-b border-slate-200 dark:border-white/10 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors cursor-pointer animate-in fade-in duration-300" (click)="navigateToDetail()">
+      <div class="flex gap-2 sm:gap-3">
         <!-- Avatar -->
         <div class="flex-shrink-0">
           <img [src]="post().user.avatar" 
-               class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 object-cover hover:opacity-80 transition-opacity" 
+               class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-200 dark:bg-slate-800 object-cover hover:opacity-80 transition-opacity" 
                alt="Avatar">
         </div>
         
@@ -36,14 +38,17 @@ import { Post } from '../services/social.service';
               <span class="text-slate-500 text-sm">·</span>
               <span class="text-slate-500 text-sm">{{ formatDate(post().created_at) }}</span>
             </div>
-            <button class="text-slate-400 hover:text-indigo-500 p-1 rounded-full hover:bg-indigo-50 dark:hover:bg-indigo-500/10" (click)="$event.stopPropagation()">
-               <app-icon name="more-horizontal" [size]="18"></app-icon>
-            </button>
+            <div (click)="$event.stopPropagation()">
+              <app-action-menu 
+                [items]="menuItems"
+                (itemSelected)="handleMenuAction($event)">
+              </app-action-menu>
+            </div>
           </div>
           
           <!-- Text -->
           @if (post().post_text) {
-            <p class="text-slate-900 dark:text-slate-100 whitespace-pre-wrap mb-3 text-[15px] leading-relaxed">
+            <p class="text-slate-900 dark:text-slate-100 whitespace-pre-wrap mb-3 text-sm sm:text-[15px] leading-relaxed">
               {{ post().post_text }}
             </p>
           }
@@ -181,36 +186,46 @@ import { Post } from '../services/social.service';
 
           <!-- Actions -->
           <div class="flex items-center justify-between max-w-md text-slate-500 mt-2" (click)="$event.stopPropagation()">
-            <button class="group flex items-center gap-2 hover:text-indigo-500 transition-colors" title="Reply">
-              <div class="p-2 rounded-full group-hover:bg-indigo-500/10 transition-colors">
+            <button class="group flex items-center gap-1 sm:gap-2 hover:text-indigo-500 transition-colors" title="Reply">
+              <div class="p-1.5 sm:p-2 rounded-full group-hover:bg-indigo-500/10 transition-colors">
                 <app-icon name="message-circle" [size]="18"></app-icon>
               </div>
-              <span class="text-sm group-hover:text-indigo-500">{{ post().comments_count }}</span>
+              <span class="text-xs sm:text-sm group-hover:text-indigo-500">{{ post().comments_count }}</span>
             </button>
 
-            <button class="group flex items-center gap-2 hover:text-green-500 transition-colors" title="Repost">
-              <div class="p-2 rounded-full group-hover:bg-green-500/10 transition-colors">
+            <button class="group flex items-center gap-1 sm:gap-2 hover:text-green-500 transition-colors hidden sm:flex" title="Repost">
+              <div class="p-1.5 sm:p-2 rounded-full group-hover:bg-green-500/10 transition-colors">
                 <app-icon name="repeat" [size]="18"></app-icon>
               </div>
-              <span class="text-sm group-hover:text-green-500">42</span>
+              <span class="text-xs sm:text-sm group-hover:text-green-500">42</span>
             </button>
 
-            <button class="group flex items-center gap-2 hover:text-pink-500 transition-colors" title="Like" (click)="toggleLike($event)">
-              <div class="p-2 rounded-full group-hover:bg-pink-500/10 transition-colors relative">
-                <app-icon [name]="isLiked() ? 'heart-filled' : 'heart'" [size]="18" [class]="isLiked() ? 'text-pink-500' : ''"></app-icon>
-              </div>
-              <span class="text-sm group-hover:text-pink-500" [class.text-pink-500]="isLiked()">{{ likesCount() }}</span>
-            </button>
+            <div (click)="$event.stopPropagation()">
+              <app-reaction-picker 
+                (reactionSelected)="handleReaction($event)"
+                [triggerClass]="'group flex items-center gap-1 sm:gap-2 hover:text-pink-500 transition-colors'">
+                <div class="p-1.5 sm:p-2 rounded-full group-hover:bg-pink-500/10 transition-colors relative flex items-center gap-1">
+                  @if (currentReaction()) {
+                    <span class="text-base sm:text-lg">{{ getReactionEmoji(currentReaction()) }}</span>
+                  } @else {
+                    <app-icon name="heart" [size]="18"></app-icon>
+                  }
+                </div>
+                <span class="text-xs sm:text-sm group-hover:text-pink-500" [class]="getReactionColor(currentReaction())">
+                  {{ likesCount() }}
+                </span>
+              </app-reaction-picker>
+            </div>
             
-            <button class="group flex items-center gap-2 hover:text-indigo-500 transition-colors" title="Views">
-               <div class="p-2 rounded-full group-hover:bg-indigo-500/10 transition-colors">
+            <button class="group flex items-center gap-1 sm:gap-2 hover:text-indigo-500 transition-colors hidden md:flex" title="Views">
+               <div class="p-1.5 sm:p-2 rounded-full group-hover:bg-indigo-500/10 transition-colors">
                   <app-icon name="monitor" [size]="18"></app-icon>
                </div>
-               <span class="text-sm group-hover:text-indigo-500">{{ formatNumber(post().views_count) }}</span>
+               <span class="text-xs sm:text-sm group-hover:text-indigo-500">{{ formatNumber(post().views_count) }}</span>
             </button>
 
-            <button class="group flex items-center gap-2 hover:text-indigo-500 transition-colors" title="Share" (click)="share($event)">
-              <div class="p-2 rounded-full group-hover:bg-indigo-500/10 transition-colors relative">
+            <button class="group flex items-center gap-1 sm:gap-2 hover:text-indigo-500 transition-colors" title="Share" (click)="share($event)">
+              <div class="p-1.5 sm:p-2 rounded-full group-hover:bg-indigo-500/10 transition-colors relative">
                  @if (copied()) {
                     <app-icon name="check" [size]="18" class="text-green-500"></app-icon>
                  } @else {
@@ -218,7 +233,7 @@ import { Post } from '../services/social.service';
                  }
               </div>
               @if (copied()) {
-                <span class="text-sm text-green-500 font-medium animate-in fade-in">Copied</span>
+                <span class="text-xs sm:text-sm text-green-500 font-medium animate-in fade-in hidden sm:inline">Copied</span>
               }
             </button>
           </div>
@@ -229,26 +244,93 @@ import { Post } from '../services/social.service';
 })
 export class PostCardComponent {
   post = input.required<Post>();
-  isLiked = signal(false);
+  currentReaction = signal<ReactionType | null>(null);
   likesCount = signal(0);
   copied = signal(false);
   
   private router = inject(Router);
 
+  menuItems: MenuItem[] = [
+    { id: 'bookmark', label: 'Bookmark', icon: 'bookmark', show: true },
+    { id: 'copy', label: 'Copy link', icon: 'link', show: true },
+    { id: 'embed', label: 'Embed post', icon: 'code', show: true },
+    { id: 'mute', label: 'Mute conversation', icon: 'volume-x', show: true },
+    { id: 'report', label: 'Report post', icon: 'flag', danger: true, show: true },
+  ];
+
   ngOnInit() {
-    this.isLiked.set(this.post().is_liked || false);
+    this.currentReaction.set(this.post().is_liked ? 'LIKE' : null);
     this.likesCount.set(this.post().likes_count);
+  }
+
+  getReactionEmoji(type: ReactionType | null): string {
+    const reactions: Record<ReactionType, string> = {
+      'LIKE': '👍',
+      'LOVE': '❤️',
+      'HAHA': '😂',
+      'WOW': '😮',
+      'SAD': '😢',
+      'ANGRY': '😠'
+    };
+    return type ? reactions[type] : '';
+  }
+
+  getReactionColor(type: ReactionType | null): string {
+    const colors: Record<ReactionType, string> = {
+      'LIKE': 'text-blue-500',
+      'LOVE': 'text-red-500',
+      'HAHA': 'text-yellow-500',
+      'WOW': 'text-yellow-500',
+      'SAD': 'text-blue-400',
+      'ANGRY': 'text-orange-500'
+    };
+    return type ? colors[type] : '';
   }
 
   navigateToDetail() {
     this.router.navigate(['/app/post', this.post().id]);
   }
 
-  toggleLike(e: Event) {
-    e.stopPropagation();
-    const current = this.isLiked();
-    this.isLiked.set(!current);
-    this.likesCount.update(v => current ? v - 1 : v + 1);
+  handleReaction(type: ReactionType) {
+    const current = this.currentReaction();
+    
+    if (current === type) {
+      // Remove reaction
+      this.currentReaction.set(null);
+      this.likesCount.update(v => Math.max(0, v - 1));
+    } else if (current) {
+      // Change reaction (count stays same)
+      this.currentReaction.set(type);
+    } else {
+      // Add new reaction
+      this.currentReaction.set(type);
+      this.likesCount.update(v => v + 1);
+    }
+    
+    // TODO: Call API to save reaction
+    console.log('Reaction:', type);
+  }
+
+  handleMenuAction(action: string) {
+    switch (action) {
+      case 'bookmark':
+        console.log('Bookmark post');
+        break;
+      case 'copy':
+        this.share(new Event('click'));
+        break;
+      case 'embed':
+        console.log('Embed post');
+        break;
+      case 'mute':
+        console.log('Mute conversation');
+        break;
+      case 'report':
+        if (confirm('Report this post?')) {
+          console.log('Report post');
+        }
+        break;
+    }
   }
 
   share(e: Event) {

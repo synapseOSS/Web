@@ -1,20 +1,19 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { AuthService } from './auth.service';
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeService } from './realtime.service';
 
 export interface Notification {
   id: string;
   user_id: string;
-  sender_id?: string;
-  type: string;
-  title?: string;
+  type: 'LIKE' | 'COMMENT' | 'FOLLOW' | 'MENTION' | 'REPOST';
+  actor_uid: string;
+  target_id?: string;
+  target_type?: 'POST' | 'COMMENT';
   message: string;
-  data?: any;
-  read: boolean;
-  action_url?: string;
+  is_read: boolean;
   created_at: string;
-  sender?: {
+  actor?: {
     username: string;
     display_name: string;
     avatar: string;
@@ -27,12 +26,31 @@ export interface Notification {
 export class NotificationService {
   private supabase = inject(SupabaseService).client;
   private auth = inject(AuthService);
-  
+  private realtime = inject(RealtimeService);
+
   notifications = signal<Notification[]>([]);
   unreadCount = signal(0);
   loading = signal(false);
-  
-  private notificationChannel?: RealtimeChannel;
+
+  constructor() {
+    // Subscribe to real-time notifications when user is authenticated
+    this.auth.currentUser.subscribe(user => {
+      if (user) {
+        this.subscribeToNotifications(user.id);
+        this.fetchNotifications();
+      }
+    });
+  }
+
+  private subscribeToNotifications(userId: string) {
+    this.realtime.subscribeToNotifications(userId, (newNotification) => {
+      this.notifications.update(notifs => [newNotification, ...notifs]);
+      this.unreadCount.update(count => count + 1);
+      
+      // Show browser notification if permission granted
+      this.showBrowserNotification(newNotification);
+    });
+  }
 
   async fetchNotifications() {
     const userId = this.auth.currentUser()?.id;
@@ -44,7 +62,7 @@ export class NotificationService {
         .from('notifications')
         .select(`
           *,
-          sender:sender_id (
+          actor:actor_uid (
             username,
             display_name,
             avatar
@@ -56,8 +74,8 @@ export class NotificationService {
 
       if (error) throw error;
 
-      this.notifications.set(data || []);
-      this.updateUnreadCount();
+      this.notifications.set(data as any[]);
+      this.unreadCount.set(data.filter(n => !n.is_read).length);
     } catch (err) {
       console.error('Error fetching notifications:', err);
     } finally {
@@ -65,20 +83,19 @@ export class NotificationService {
     }
   }
 
-  updateUnreadCount() {
-    const unread = this.notifications().filter(n => !n.read).length;
-    this.unreadCount.set(unread);
-  }
-
   async markAsRead(notificationId: string) {
     try {
       const { error } = await this.supabase
         .from('notifications')
-        .update({ read: true, read_at: new Date().toISOString() })
+        .update({ is_read: true })
         .eq('id', notificationId);
 
       if (error) throw error;
-      await this.fetchNotifications();
+
+      this.notifications.update(notifs =>
+        notifs.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
+      );
+      this.unreadCount.update(count => Math.max(0, count - 1));
     } catch (err) {
       console.error('Error marking notification as read:', err);
     }
@@ -91,71 +108,74 @@ export class NotificationService {
     try {
       const { error } = await this.supabase
         .from('notifications')
-        .update({ read: true, read_at: new Date().toISOString() })
+        .update({ is_read: true })
         .eq('user_id', userId)
-        .eq('read', false);
+        .eq('is_read', false);
 
       if (error) throw error;
-      await this.fetchNotifications();
+
+      this.notifications.update(notifs =>
+        notifs.map(n => ({ ...n, is_read: true }))
+      );
+      this.unreadCount.set(0);
     } catch (err) {
       console.error('Error marking all as read:', err);
     }
   }
 
-  async deleteNotification(notificationId: string) {
-    try {
-      const { error } = await this.supabase
-        .from('notifications')
-        .delete()
-        .eq('id', notificationId);
-
-      if (error) throw error;
-      await this.fetchNotifications();
-    } catch (err) {
-      console.error('Error deleting notification:', err);
-    }
-  }
-
-  setupRealtimeNotifications() {
-    const userId = this.auth.currentUser()?.id;
-    if (!userId) return;
-
-    this.notificationChannel?.unsubscribe();
-    
-    this.notificationChannel = this.supabase
-      .channel(`notifications:${userId}`)
-      .on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
-        (payload) => {
-          this.notifications.update(current => [payload.new as Notification, ...current]);
-          this.updateUnreadCount();
-          this.showBrowserNotification(payload.new as Notification);
-        }
-      )
-      .subscribe();
-  }
-
-  private showBrowserNotification(notification: Notification) {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(notification.title || 'New Notification', {
-        body: notification.message,
-        icon: '/favicon.ico'
-      });
-    }
-  }
-
   async requestPermission() {
-    if ('Notification' in window && Notification.permission === 'default') {
-      await Notification.requestPermission();
+    if (!('Notification' in window)) {
+      console.log('This browser does not support notifications');
+      return false;
     }
+
+    if (Notification.permission === 'granted') {
+      return true;
+    }
+
+    if (Notification.permission !== 'denied') {
+      const permission = await Notification.requestPermission();
+      return permission === 'granted';
+    }
+
+    return false;
   }
 
-  cleanup() {
-    this.notificationChannel?.unsubscribe();
+  private async showBrowserNotification(notification: Notification) {
+    if (Notification.permission !== 'granted') return;
+
+    const options: NotificationOptions = {
+      body: notification.message,
+      icon: notification.actor?.avatar || '/icons/icon-192x192.png',
+      badge: '/icons/icon-72x72.png',
+      tag: notification.id,
+      requireInteraction: false,
+      data: {
+        url: this.getNotificationUrl(notification)
+      }
+    };
+
+    const n = new Notification('Synapse', options);
+    
+    n.onclick = () => {
+      window.focus();
+      window.location.href = options.data.url;
+      n.close();
+    };
   }
 
-  constructor() {
-    this.setupRealtimeNotifications();
-    this.fetchNotifications();
+  private getNotificationUrl(notification: Notification): string {
+    switch (notification.type) {
+      case 'LIKE':
+      case 'COMMENT':
+      case 'REPOST':
+        return `/app/post/${notification.target_id}`;
+      case 'FOLLOW':
+        return `/app/profile/${notification.actor?.username}`;
+      case 'MENTION':
+        return `/app/post/${notification.target_id}`;
+      default:
+        return '/app/feed';
+    }
   }
 }

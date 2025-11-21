@@ -10,6 +10,10 @@ export interface Comment {
   likes_count: number;
   replies_count: number;
   created_at: string;
+  is_edited?: boolean;
+  is_deleted?: boolean;
+  media_url?: string;
+  media_type?: 'IMAGE' | 'VIDEO' | 'GIF' | 'VOICE';
   is_liked?: boolean;
   user?: {
     uid: string;
@@ -155,6 +159,40 @@ export class CommentService {
 
     if (!error) {
       await this.fetchComments(postId);
+    }
+  }
+
+  async editComment(commentId: string, newContent: string) {
+    try {
+      const { error } = await this.supabase
+        .from('comments')
+        .update({
+          content: newContent,
+          is_edited: true
+        })
+        .eq('id', commentId);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error editing comment:', err);
+      throw err;
+    }
+  }
+
+  async deleteComment(commentId: string) {
+    try {
+      const { error } = await this.supabase
+        .from('comments')
+        .update({
+          is_deleted: true,
+          content: '[deleted]'
+        })
+        .eq('id', commentId);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error deleting comment:', err);
+      throw err;
     }
   }
 }
