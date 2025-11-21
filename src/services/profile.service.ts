@@ -1,6 +1,7 @@
 import { Injectable, signal, inject, computed } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { AuthService } from './auth.service';
+import { ImgBBService } from './imgbb.service';
 
 export interface UserProfile {
   id: string;
@@ -49,6 +50,7 @@ export interface ProfileUpdateData {
 export class ProfileService {
   private supabase = inject(SupabaseService).client;
   private auth = inject(AuthService);
+  private imgbb = inject(ImgBBService);
 
   currentProfile = signal<UserProfile | null>(null);
   isLoading = signal(false);
@@ -173,33 +175,16 @@ export class ProfileService {
     }
 
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
-
-      console.log('Uploading avatar to:', filePath);
-
-      // Try user-media bucket first (same as stories)
-      const { error: uploadError, data: uploadData } = await this.supabase.storage
-        .from('user-media')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw uploadError;
+      console.log('Uploading avatar to ImgBB...');
+      
+      const url = await this.imgbb.uploadImage(file, `avatar-${user.id}`);
+      
+      if (!url) {
+        throw new Error('ImgBB upload failed');
       }
 
-      console.log('Upload successful:', uploadData);
-
-      const { data } = this.supabase.storage
-        .from('user-media')
-        .getPublicUrl(filePath);
-
-      console.log('Public URL:', data.publicUrl);
-      return data.publicUrl;
+      console.log('✅ Avatar uploaded:', url);
+      return url;
     } catch (err: any) {
       console.error('Error uploading avatar:', err);
       this.error.set(err.message || 'Failed to upload avatar');
@@ -215,33 +200,16 @@ export class ProfileService {
     }
 
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-cover-${Date.now()}.${fileExt}`;
-      const filePath = `covers/${fileName}`;
-
-      console.log('Uploading cover to:', filePath);
-
-      // Try user-media bucket first (same as stories)
-      const { error: uploadError, data: uploadData } = await this.supabase.storage
-        .from('user-media')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw uploadError;
+      console.log('Uploading cover image to ImgBB...');
+      
+      const url = await this.imgbb.uploadImage(file, `cover-${user.id}`);
+      
+      if (!url) {
+        throw new Error('ImgBB upload failed');
       }
 
-      console.log('Upload successful:', uploadData);
-
-      const { data } = this.supabase.storage
-        .from('user-media')
-        .getPublicUrl(filePath);
-
-      console.log('Public URL:', data.publicUrl);
-      return data.publicUrl;
+      console.log('✅ Cover image uploaded:', url);
+      return url;
     } catch (err: any) {
       console.error('Error uploading cover image:', err);
       this.error.set(err.message || 'Failed to upload cover image');

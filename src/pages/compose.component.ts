@@ -10,6 +10,7 @@ import { TextParserService } from '../services/text-parser.service';
 import { MentionService } from '../services/mention.service';
 import { HashtagService } from '../services/hashtag.service';
 import { SupabaseService } from '../services/supabase.service';
+import { ImgBBService } from '../services/imgbb.service';
 
 interface PollOption {
   id: string;
@@ -265,6 +266,7 @@ export class ComposeComponent {
   private mentionService = inject(MentionService);
   private hashtagService = inject(HashtagService);
   private supabase = inject(SupabaseService).client;
+  private imgbb = inject(ImgBBService);
   
   text = '';
   mediaItems = signal<MediaItem[]>([]);
@@ -338,25 +340,39 @@ export class ComposeComponent {
 
   private async uploadMedia(file: File): Promise<string | null> {
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const folder = file.type.startsWith('video') ? 'videos' : 'images';
-      const filePath = `posts/${folder}/${fileName}`;
+      // Use ImgBB for images, Supabase for videos
+      if (file.type.startsWith('image')) {
+        console.log('Uploading image to ImgBB...');
+        const url = await this.imgbb.uploadImage(file);
+        if (url) {
+          console.log('✅ Image uploaded:', url);
+          return url;
+        }
+        throw new Error('ImgBB upload failed');
+      } else if (file.type.startsWith('video')) {
+        console.log('Uploading video to Supabase...');
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `posts/videos/${fileName}`;
 
-      const { error: uploadError } = await this.supabase.storage
-        .from('user-media')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
+        const { error: uploadError } = await this.supabase.storage
+          .from('user-media')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
 
-      if (uploadError) throw uploadError;
+        if (uploadError) throw uploadError;
 
-      const { data } = this.supabase.storage
-        .from('user-media')
-        .getPublicUrl(filePath);
+        const { data } = this.supabase.storage
+          .from('user-media')
+          .getPublicUrl(filePath);
 
-      return data.publicUrl;
+        console.log('✅ Video uploaded:', data.publicUrl);
+        return data.publicUrl;
+      }
+
+      return null;
     } catch (err) {
       console.error('Upload error:', err);
       return null;
