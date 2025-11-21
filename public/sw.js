@@ -1,4 +1,4 @@
-const CACHE_VERSION = '1.0.1';
+const CACHE_VERSION = '1.0.2';
 const CACHE_NAME = `synapse-v${CACHE_VERSION}`;
 const RUNTIME_CACHE = `synapse-runtime-v${CACHE_VERSION}`;
 const IMAGE_CACHE = `synapse-images-v${CACHE_VERSION}`;
@@ -11,14 +11,8 @@ const CORE_ASSETS = [
   '/offline.html',
   '/404.html',
   '/robots.txt',
-  '/icons/icon-192x192.svg',
-  '/icons/icon-512x512.svg',
-  '/icons/icon-72x72.svg',
-  '/icons/icon-96x96.svg',
-  '/icons/icon-128x128.svg',
-  '/icons/icon-144x144.svg',
-  '/icons/icon-152x152.svg',
-  '/icons/icon-384x384.svg'
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png'
 ];
 
 // Install event - cache core assets
