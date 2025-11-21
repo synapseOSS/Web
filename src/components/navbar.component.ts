@@ -11,13 +11,13 @@ import { ThemeService } from '../services/theme.service';
   standalone: true,
   imports: [CommonModule, RouterModule, IconComponent],
   template: `
-    <nav class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+    <nav class="fixed top-0 left-0 right-0 z-50 transition-all duration-500 gpu-accelerated"
          [class]="isScrolled() 
-           ? 'bg-white/80 dark:bg-slate-950/80 backdrop-blur-lg border-b border-slate-200 dark:border-white/10 py-3' 
-           : 'py-4'">
+           ? 'glass-strong border-b border-slate-200/50 dark:border-white/10 py-3 shadow-lg shadow-slate-900/5 dark:shadow-black/20' 
+           : 'py-4 bg-transparent'">
       
       <!-- Scroll Progress Bar -->
-      <div class="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-indigo-600 to-cyan-500 transition-all duration-150 ease-out z-50"
+      <div class="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 transition-all duration-300 ease-out z-50 glow-indigo"
            [style.width.%]="scrollPercent()"
            [style.opacity]="scrollPercent() > 1 ? 1 : 0"></div>
 
@@ -25,26 +25,39 @@ import { ThemeService } from '../services/theme.service';
         <div class="flex items-center justify-between">
           <!-- Logo -->
           <div class="flex items-center gap-2 md:gap-3 group cursor-pointer" routerLink="/">
-            <div class="relative w-8 h-8 md:w-10 md:h-10 bg-indigo-600 rounded-lg md:rounded-xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
-              <div class="absolute inset-0 bg-indigo-500 blur-lg opacity-50"></div>
-              <app-icon name="zap" [size]="20" class="text-white relative z-10"></app-icon>
+            <div class="relative w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg md:rounded-xl flex items-center justify-center group-hover:rotate-12 group-hover:scale-110 transition-all duration-500 gpu-accelerated glow-indigo">
+              <div class="absolute inset-0 bg-indigo-500 blur-xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
+              <app-icon name="zap" [size]="20" class="text-white relative z-10 group-hover:scale-110 transition-transform"></app-icon>
             </div>
-            <span class="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Synapse</span>
+            <span class="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Synapse</span>
           </div>
 
           <!-- Desktop Links - Centered -->
           <div class="hidden lg:flex items-center gap-10 xl:gap-12 absolute left-1/2 -translate-x-1/2">
-            <a routerLink="/pricing" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" class="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white transition-colors text-base font-medium cursor-pointer">Pricing</a>
-            <a routerLink="/downloads" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" class="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white transition-colors text-base font-medium cursor-pointer">Downloads</a>
-            <a routerLink="/docs" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" class="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white transition-colors text-base font-medium cursor-pointer">Docs</a>
-            <a routerLink="/changelog" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" class="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white transition-colors text-base font-medium">Changelog</a>
+            <a routerLink="/pricing" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" class="relative text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white transition-all text-base font-medium cursor-pointer group">
+              Pricing
+              <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-indigo-600 to-purple-600 group-hover:w-full transition-all duration-300"></span>
+            </a>
+            <a routerLink="/downloads" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" class="relative text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white transition-all text-base font-medium cursor-pointer group">
+              Downloads
+              <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-indigo-600 to-purple-600 group-hover:w-full transition-all duration-300"></span>
+            </a>
+            <a routerLink="/docs" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" class="relative text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white transition-all text-base font-medium cursor-pointer group">
+              Docs
+              <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-indigo-600 to-purple-600 group-hover:w-full transition-all duration-300"></span>
+            </a>
+            <a routerLink="/changelog" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" class="relative text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white transition-all text-base font-medium group">
+              Changelog
+              <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-indigo-600 to-purple-600 group-hover:w-full transition-all duration-300"></span>
+            </a>
           </div>
 
           <!-- CTA & Mobile Menu -->
           <div class="flex items-center gap-3 md:gap-4 lg:gap-5">
             <!-- Theme Toggle -->
-            <button (click)="themeService.toggle()" class="p-2 md:p-2.5 rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" [attr.aria-label]="themeService.darkMode() ? 'Switch to light mode' : 'Switch to dark mode'">
-              <app-icon [name]="themeService.darkMode() ? 'sun' : 'moon'" [size]="20"></app-icon>
+            <button (click)="toggleTheme($event)" class="relative p-2 md:p-2.5 rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 transition-all duration-300 hover:scale-110 active:scale-95 group overflow-hidden gpu-accelerated" [attr.aria-label]="themeService.darkMode() ? 'Switch to light mode' : 'Switch to dark mode'">
+              <div class="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity shimmer animate-shimmer"></div>
+              <app-icon [name]="themeService.darkMode() ? 'sun' : 'moon'" [size]="20" class="relative z-10 transition-transform duration-500 group-hover:rotate-12" [class.rotate-180]="!themeService.darkMode()"></app-icon>
             </button>
 
             @if (authService.currentUser()) {
@@ -56,9 +69,10 @@ import { ThemeService } from '../services/theme.service';
               <a routerLink="/login" class="hidden lg:flex text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white font-medium text-base transition-colors px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">Log In</a>
             }
 
-            <button class="hidden lg:flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-950 px-6 py-2.5 rounded-full font-semibold text-base hover:bg-slate-800 dark:hover:bg-indigo-50 transition-all transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl">
-              Launch Web
-              <app-icon name="chevron-right" [size]="18"></app-icon>
+            <button class="hidden lg:flex items-center gap-2 bg-gradient-to-r from-slate-900 to-slate-800 dark:from-white dark:to-indigo-50 text-white dark:text-slate-950 px-6 py-2.5 rounded-full font-semibold text-base hover:from-slate-800 hover:to-slate-700 dark:hover:from-indigo-50 dark:hover:to-purple-50 transition-all transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-2xl gpu-accelerated group relative overflow-hidden">
+              <div class="absolute inset-0 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 opacity-0 group-hover:opacity-100 transition-opacity shimmer animate-shimmer"></div>
+              <span class="relative z-10">Launch Web</span>
+              <app-icon name="chevron-right" [size]="18" class="relative z-10 group-hover:translate-x-1 transition-transform"></app-icon>
             </button>
             
             <button class="lg:hidden text-slate-900 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-white p-2" (click)="toggleMenu()">
@@ -70,7 +84,7 @@ import { ThemeService } from '../services/theme.service';
 
       <!-- Mobile Menu -->
       @if (mobileMenuOpen()) {
-        <div class="lg:hidden absolute top-full left-0 right-0 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 p-6 flex flex-col gap-4 animate-in slide-in-from-top-2 shadow-2xl">
+        <div class="lg:hidden absolute top-full left-0 right-0 glass-strong border-b border-slate-200/50 dark:border-white/10 p-6 flex flex-col gap-4 animate-slide-down shadow-2xl shadow-slate-900/10 dark:shadow-black/30">
           <a routerLink="/pricing" (click)="toggleMenu()" class="text-lg font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-white transition-colors">Pricing</a>
           <a routerLink="/downloads" (click)="toggleMenu()" class="text-lg font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-white transition-colors">Downloads</a>
           <a routerLink="/docs" (click)="toggleMenu()" class="text-lg font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-white transition-colors">Documentation</a>
@@ -115,5 +129,9 @@ export class NavbarComponent {
 
   toggleMenu() {
     this.mobileMenuOpen.update(v => !v);
+  }
+
+  toggleTheme(event: MouseEvent) {
+    this.themeService.toggle(event);
   }
 }

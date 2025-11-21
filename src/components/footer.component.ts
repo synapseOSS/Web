@@ -19,11 +19,12 @@ import { IconComponent } from './icon.component';
           
           <!-- Column 1: Brand & Description (Takes full width on mobile, 4 cols on desktop) -->
           <div class="lg:col-span-4">
-            <div class="flex items-center gap-2 mb-6">
-              <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                <app-icon name="zap" [size]="18" class="text-white"></app-icon>
+            <div class="flex items-center gap-2 mb-6 group cursor-pointer">
+              <div class="relative w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:shadow-xl group-hover:shadow-indigo-500/40 transition-all group-hover:scale-110 gpu-accelerated glow-indigo">
+                <div class="absolute inset-0 bg-indigo-400 blur-lg opacity-30 group-hover:opacity-50 transition-opacity"></div>
+                <app-icon name="zap" [size]="18" class="text-white relative z-10"></app-icon>
               </div>
-              <span class="text-2xl font-bold text-slate-900 dark:text-white">Synapse</span>
+              <span class="text-2xl font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Synapse</span>
             </div>
             <p class="text-slate-600 dark:text-slate-400 mb-8 max-w-sm leading-relaxed">
               Reclaiming the social internet, one node at a time. Open source, decentralized, and built for people, not advertisers.
@@ -31,24 +32,24 @@ import { IconComponent } from './icon.component';
             
             <!-- Social Links -->
             <div class="flex items-center gap-4">
-              <a href="https://twitter.com" target="_blank" aria-label="Twitter" class="p-2.5 rounded-full transition-all hover:-translate-y-1
-                                bg-slate-200 text-slate-600 hover:bg-[#1DA1F2] hover:text-white
-                                dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-white dark:hover:text-black">
+              <a href="https://twitter.com" target="_blank" aria-label="Twitter" class="p-2.5 rounded-full transition-all hover:-translate-y-1 hover:scale-110 gpu-accelerated
+                                bg-slate-200 text-slate-600 hover:bg-[#1DA1F2] hover:text-white hover:shadow-lg hover:shadow-[#1DA1F2]/30
+                                dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-white dark:hover:text-black dark:hover:shadow-white/20">
                 <app-icon name="twitter" [size]="18"></app-icon>
               </a>
-              <a href="https://discord.gg" target="_blank" aria-label="Discord" class="p-2.5 rounded-full transition-all hover:-translate-y-1
-                                bg-slate-200 text-slate-600 hover:bg-[#5865F2] hover:text-white
-                                dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-[#5865F2] dark:hover:text-white">
+              <a href="https://discord.gg" target="_blank" aria-label="Discord" class="p-2.5 rounded-full transition-all hover:-translate-y-1 hover:scale-110 gpu-accelerated
+                                bg-slate-200 text-slate-600 hover:bg-[#5865F2] hover:text-white hover:shadow-lg hover:shadow-[#5865F2]/30
+                                dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-[#5865F2] dark:hover:text-white dark:hover:shadow-[#5865F2]/30">
                 <app-icon name="discord" [size]="18"></app-icon>
               </a>
-              <a href="https://github.com/SynapseOSS" target="_blank" aria-label="GitHub" class="p-2.5 rounded-full transition-all hover:-translate-y-1
-                                bg-slate-200 text-slate-600 hover:bg-[#333] hover:text-white
-                                dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-white dark:hover:text-black">
+              <a href="https://github.com/SynapseOSS" target="_blank" aria-label="GitHub" class="p-2.5 rounded-full transition-all hover:-translate-y-1 hover:scale-110 gpu-accelerated
+                                bg-slate-200 text-slate-600 hover:bg-[#333] hover:text-white hover:shadow-lg hover:shadow-slate-900/30
+                                dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-white dark:hover:text-black dark:hover:shadow-white/20">
                 <app-icon name="github" [size]="18"></app-icon>
               </a>
-              <a href="https://linkedin.com" target="_blank" aria-label="LinkedIn" class="p-2.5 rounded-full transition-all hover:-translate-y-1
-                                bg-slate-200 text-slate-600 hover:bg-[#0A66C2] hover:text-white
-                                dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-[#0A66C2] dark:hover:text-white">
+              <a href="https://linkedin.com" target="_blank" aria-label="LinkedIn" class="p-2.5 rounded-full transition-all hover:-translate-y-1 hover:scale-110 gpu-accelerated
+                                bg-slate-200 text-slate-600 hover:bg-[#0A66C2] hover:text-white hover:shadow-lg hover:shadow-[#0A66C2]/30
+                                dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-[#0A66C2] dark:hover:text-white dark:hover:shadow-[#0A66C2]/30">
                 <app-icon name="linkedin" [size]="18"></app-icon>
               </a>
             </div>
@@ -104,10 +105,10 @@ import { IconComponent } from './icon.component';
           
           <div class="flex items-center gap-6">
              <!-- Status Indicator -->
-             <div class="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 font-medium px-3 py-1 rounded-full bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900/30">
+             <div class="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 font-medium px-3 py-1 rounded-full bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900/30 hover:scale-105 transition-transform gpu-accelerated cursor-pointer">
                <span class="relative flex h-2 w-2">
                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                 <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                 <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500 shadow-lg shadow-green-500/50"></span>
                </span>
                All Systems Operational
              </div>

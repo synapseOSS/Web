@@ -3,10 +3,11 @@
 
 <!-- PWA Install Banner -->
 @if (pwaService.isInstallable() && !pwaService.isInstalled()) {
-  <div class="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-4 z-50 animate-[slideUp_0.3s_ease-out]">
+  <div class="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 glass-strong rounded-2xl shadow-2xl border border-slate-200/50 dark:border-white/10 p-4 z-50 animate-slide-up hover-lift gpu-accelerated">
     <div class="flex items-start gap-3">
-      <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
-        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="relative w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 glow-indigo animate-glow">
+        <div class="absolute inset-0 bg-indigo-400 blur-lg opacity-40"></div>
+        <svg class="w-6 h-6 text-white relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
         </svg>
       </div>
@@ -16,12 +17,12 @@
         <div class="flex gap-2">
           <button 
             (click)="installPwa()" 
-            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-lg transition-colors">
+            class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-xs font-medium rounded-lg transition-all transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg glow-indigo">
             Install
           </button>
           <button 
             (click)="dismissInstall()" 
-            class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium rounded-lg transition-colors">
+            class="px-4 py-2 glass-subtle hover:glass text-slate-700 dark:text-slate-300 text-xs font-medium rounded-lg transition-all transform hover:scale-105 active:scale-95">
             Not now
           </button>
         </div>
@@ -32,7 +33,7 @@
 
 <!-- PWA Update Banner -->
 @if (pwaService.updateAvailable()) {
-  <div class="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 bg-indigo-600 rounded-xl shadow-2xl p-4 z-50 animate-[slideDown_0.3s_ease-out]">
+  <div class="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-2xl p-4 z-50 animate-slide-down hover-lift gpu-accelerated glow-indigo">
     <div class="flex items-center gap-3">
       <svg class="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
@@ -43,7 +44,7 @@
       </div>
       <button 
         (click)="updatePwa()" 
-        class="px-3 py-1.5 bg-white text-indigo-600 text-xs font-medium rounded-lg hover:bg-indigo-50 transition-colors">
+        class="px-3 py-1.5 bg-white text-indigo-600 text-xs font-medium rounded-lg hover:bg-indigo-50 transition-all transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg">
         Update
       </button>
     </div>
@@ -52,7 +53,7 @@
 
 <!-- Offline Indicator -->
 @if (!pwaService.isOnline()) {
-  <div class="fixed top-4 left-1/2 -translate-x-1/2 bg-amber-500 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium z-50 flex items-center gap-2">
+  <div class="fixed top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium z-50 flex items-center gap-2 animate-fade-in gpu-accelerated">
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414"></path>
     </svg>
