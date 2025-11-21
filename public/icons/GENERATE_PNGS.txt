@@ -1,0 +1,11 @@
+Chrome requires PNG icons for PWA installation (SVG not supported for installability).
+
+QUICK FIX:
+1. Open generate-png-icons.html in your browser
+2. Click "Generate PNG Icons" button
+3. Two files will auto-download: icon-192x192.png and icon-512x512.png
+4. Move both PNG files to this folder (public/icons/)
+5. Restart your dev server
+6. Chrome will now show "Install" instead of "Create shortcut"
+
+The manifest.json will automatically use PNG icons once they exist in this folder.
