@@ -9,17 +9,18 @@
     "preview": "ng serve --configuration=production"
   },
   "dependencies": {
-    "rxjs": "^7.8.2",
-    "@angular/common": "^21.0.0",
-    "@angular/platform-browser": "^21.0.0",
-    "@angular/core": "^21.0.0",
-    "@angular/compiler": "^21.0.0",
-    "@angular/router": "^21.0.0",
-    "@angular/forms": "^21.0.0",
-    "@supabase/supabase-js": "2.39.3",
     "@angular/build": "^21.0.0",
     "@angular/cli": "^21.0.0",
+    "@angular/common": "^21.0.0",
+    "@angular/compiler": "^21.0.0",
     "@angular/compiler-cli": "^21.0.0",
+    "@angular/core": "^21.0.0",
+    "@angular/forms": "^21.0.0",
+    "@angular/platform-browser": "^21.0.0",
+    "@angular/router": "^21.0.0",
+    "@supabase/supabase-js": "2.39.3",
+    "firebase": "^12.6.0",
+    "rxjs": "^7.8.2",
     "tailwindcss": "latest"
   },
   "devDependencies": {
