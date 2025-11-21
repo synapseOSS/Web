@@ -4,13 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { IconComponent } from './icon.component';
 import { ReactionPickerComponent, ReactionType } from './reaction-picker.component';
 import { ActionMenuComponent, MenuItem } from './action-menu.component';
+import { TextFormatterComponent } from './text-formatter.component';
 import { Comment, CommentService } from '../services/comment.service';
 import { AuthService } from '../services/auth.service';
+import { TextParserService } from '../services/text-parser.service';
 
 @Component({
   selector: 'app-comment-item',
   standalone: true,
-  imports: [CommonModule, FormsModule, IconComponent, ReactionPickerComponent, ActionMenuComponent],
+  imports: [CommonModule, FormsModule, IconComponent, ReactionPickerComponent, ActionMenuComponent, TextFormatterComponent],
   template: `
     <div class="flex gap-2 sm:gap-3 py-2 sm:py-3" [class.ml-8]="isReply()" [class.sm:ml-12]="isReply()">
       <!-- Avatar -->
@@ -39,7 +41,12 @@ import { AuthService } from '../services/auth.service';
         <!-- Content -->
         @if (!isEditing()) {
           <p class="text-slate-800 dark:text-slate-200 text-xs sm:text-sm mb-2 whitespace-pre-wrap">
-            {{ comment().content }}
+            <app-text-formatter 
+              [text]="comment().content"
+              [segments]="parseText(comment().content)"
+              (mentionClicked)="handleMentionClick($event)"
+              (hashtagClicked)="handleHashtagClick($event)">
+            </app-text-formatter>
           </p>
         } @else {
           <div class="mb-2">
@@ -174,6 +181,7 @@ export class CommentItemComponent {
 
   private commentService = inject(CommentService);
   authService = inject(AuthService);
+  private textParser = inject(TextParserService);
 
   showReplyInput = signal(false);
   replyText = signal('');
@@ -342,5 +350,17 @@ export class CommentItemComponent {
     if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
     if (diff < 604800) return `${Math.floor(diff / 86400)}d`;
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+
+  parseText(text: string) {
+    return this.textParser.parseText(text);
+  }
+
+  handleMentionClick(username: string) {
+    console.log('Mention clicked:', username);
+  }
+
+  handleHashtagClick(tag: string) {
+    console.log('Hashtag clicked:', tag);
   }
 }

@@ -1,15 +1,19 @@
 
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { IconComponent } from '../components/icon.component';
+import { MentionInputComponent } from '../components/mention-input.component';
 import { SocialService, Post, MediaItem } from '../services/social.service';
+import { TextParserService } from '../services/text-parser.service';
+import { MentionService } from '../services/mention.service';
+import { HashtagService } from '../services/hashtag.service';
 
 @Component({
   selector: 'app-compose',
   standalone: true,
-  imports: [CommonModule, FormsModule, IconComponent],
+  imports: [CommonModule, FormsModule, IconComponent, MentionInputComponent],
   template: `
     <div class="min-h-screen bg-white dark:bg-slate-950 border-x border-slate-200 dark:border-white/10 pb-20">
       <!-- Header -->
@@ -32,12 +36,16 @@ import { SocialService, Post, MediaItem } from '../services/social.service';
          <div class="flex gap-4 mb-4">
             <img [src]="socialService.currentUser().avatar" class="w-12 h-12 rounded-full object-cover">
             <div class="flex-1">
-               <textarea 
-                 [(ngModel)]="text" 
-                 placeholder="What's on your mind?" 
-                 class="w-full bg-transparent border-none focus:ring-0 text-xl placeholder-slate-400 text-slate-900 dark:text-white resize-none h-32 p-0"
-                 autofocus
-               ></textarea>
+               <app-mention-input
+                 #mentionInput
+                 [placeholder]="'What\\'s on your mind?'"
+                 [rows]="6"
+                 [showCharCount]="true"
+                 [maxLength]="500"
+                 (textChanged)="onTextChanged($event)"
+                 (mentionAdded)="onMentionAdded($event)"
+                 (hashtagAdded)="onHashtagAdded($event)">
+               </app-mention-input>
             </div>
          </div>
 
@@ -93,12 +101,19 @@ import { SocialService, Post, MediaItem } from '../services/social.service';
   `
 })
 export class ComposeComponent {
+  @ViewChild('mentionInput') mentionInput!: MentionInputComponent;
+
   socialService = inject(SocialService);
   router = inject(Router);
+  private textParser = inject(TextParserService);
+  private mentionService = inject(MentionService);
+  private hashtagService = inject(HashtagService);
   
   text = '';
   mediaItems = signal<MediaItem[]>([]);
   isPosting = signal(false);
+  mentions = signal<string[]>([]);
+  hashtags = signal<string[]>([]);
 
   cancel() {
     this.router.navigate(['/app/feed']);
@@ -130,11 +145,25 @@ export class ComposeComponent {
     this.mediaItems.update(items => items.filter((_, i) => i !== index));
   }
 
-  submit() {
+  onTextChanged(text: string) {
+    this.text = text;
+    // Extract mentions and hashtags
+    this.mentions.set(this.textParser.extractMentions(text));
+    this.hashtags.set(this.textParser.extractHashtags(text));
+  }
+
+  onMentionAdded(username: string) {
+    console.log('Mention added:', username);
+  }
+
+  onHashtagAdded(tag: string) {
+    console.log('Hashtag added:', tag);
+  }
+
+  async submit() {
     this.isPosting.set(true);
     
-    // Simulate network delay
-    setTimeout(() => {
+    try {
       const newPost: Post = {
         id: Math.random().toString(36).substring(7),
         author_uid: this.socialService.currentUser().id,
@@ -149,8 +178,21 @@ export class ComposeComponent {
       };
 
       this.socialService.addPost(newPost);
+
+      // Save mentions and hashtags to database
+      if (this.mentions().length > 0) {
+        await this.mentionService.createMentions(this.mentions(), newPost.id, 'post');
+      }
+
+      if (this.hashtags().length > 0) {
+        await this.hashtagService.createHashtags(this.hashtags(), newPost.id, 'post');
+      }
+
       this.isPosting.set(false);
       this.router.navigate(['/app/feed']);
-    }, 1000);
+    } catch (err) {
+      console.error('Error creating post:', err);
+      this.isPosting.set(false);
+    }
   }
 }

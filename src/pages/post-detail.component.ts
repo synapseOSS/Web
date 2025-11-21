@@ -4,12 +4,14 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IconComponent } from '../components/icon.component';
 import { CommentSectionComponent } from '../components/comment-section.component';
+import { TextFormatterComponent } from '../components/text-formatter.component';
 import { SocialService, Post } from '../services/social.service';
+import { TextParserService } from '../services/text-parser.service';
 
 @Component({
   selector: 'app-post-detail',
   standalone: true,
-  imports: [CommonModule, IconComponent, CommentSectionComponent],
+  imports: [CommonModule, IconComponent, CommentSectionComponent, TextFormatterComponent],
   template: `
     <div class="min-h-screen bg-white dark:bg-slate-950 border-x border-slate-200 dark:border-white/10">
       
@@ -41,7 +43,12 @@ import { SocialService, Post } from '../services/social.service';
            <!-- Text Content -->
            @if (p.post_text) {
               <div class="px-3 sm:px-4 mb-3 sm:mb-4 text-[15px] sm:text-base text-slate-900 dark:text-slate-100 whitespace-pre-wrap leading-relaxed break-words">
-                 {{ p.post_text }}
+                 <app-text-formatter 
+                   [text]="p.post_text"
+                   [segments]="parseText(p.post_text)"
+                   (mentionClicked)="handleMentionClick($event)"
+                   (hashtagClicked)="handleHashtagClick($event)">
+                 </app-text-formatter>
               </div>
            }
 
@@ -113,6 +120,7 @@ export class PostDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   socialService = inject(SocialService);
+  private textParser = inject(TextParserService);
   
   postId = signal<string | null>(null);
   post = computed(() => {
@@ -139,5 +147,17 @@ export class PostDetailComponent implements OnInit {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
     if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
     return num.toString();
+  }
+
+  parseText(text: string) {
+    return this.textParser.parseText(text);
+  }
+
+  handleMentionClick(username: string) {
+    console.log('Mention clicked:', username);
+  }
+
+  handleHashtagClick(tag: string) {
+    console.log('Hashtag clicked:', tag);
   }
 }

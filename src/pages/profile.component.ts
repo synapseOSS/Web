@@ -1,10 +1,12 @@
 
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { IconComponent } from '../components/icon.component';
-import { SocialService } from '../services/social.service';
 import { PostCardComponent } from '../components/post-card.component';
+import { ProfileService, UserProfile } from '../services/profile.service';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-profile',
@@ -14,70 +16,100 @@ import { PostCardComponent } from '../components/post-card.component';
     <div class="min-h-screen border-x border-slate-200 dark:border-white/10 pb-20 relative">
       <!-- Header -->
       <div class="sticky top-0 z-20 backdrop-blur-md bg-white/80 dark:bg-slate-950/80 px-4 py-2 flex items-center gap-4 border-b border-slate-200 dark:border-white/10">
-         <button class="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full">
+         <button (click)="goBack()" class="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full">
            <app-icon name="chevron-left" [size]="20"></app-icon>
          </button>
-         <div>
-            <h1 class="font-bold text-lg leading-tight text-slate-900 dark:text-white">{{ user().display_name }}</h1>
-            <p class="text-xs text-slate-500">{{ socialService.posts().length }} Posts</p>
-         </div>
+         @if (profile()) {
+           <div>
+              <h1 class="font-bold text-lg leading-tight text-slate-900 dark:text-white">{{ profile()!.display_name }}</h1>
+              <p class="text-xs text-slate-500">{{ profile()!.posts_count }} Posts</p>
+           </div>
+         }
       </div>
 
+      @if (profile(); as p) {
       <!-- Hero -->
       <div>
          <!-- Cover -->
          <div class="h-48 bg-slate-200 dark:bg-slate-800 relative group">
-            @if (user().cover_image) {
-              <img [src]="user().cover_image" class="w-full h-full object-cover">
+            @if (p.profile_cover_image) {
+              <img [src]="p.profile_cover_image" class="w-full h-full object-cover">
             }
          </div>
          
          <!-- Avatar & Actions -->
          <div class="px-4 flex justify-between items-end relative -mt-12 mb-4">
             <div class="w-32 h-32 rounded-full border-4 border-white dark:border-slate-950 overflow-hidden bg-white dark:bg-slate-900">
-               <img [src]="user().avatar" class="w-full h-full object-cover">
+               <img [src]="p.avatar" class="w-full h-full object-cover">
             </div>
             <div class="mb-4 flex gap-2">
-               <button class="p-2 border border-slate-300 dark:border-white/20 rounded-full hover:bg-slate-50 dark:hover:bg-white/10">
-                  <app-icon name="more-horizontal" [size]="20"></app-icon>
-               </button>
-               <button class="p-2 border border-slate-300 dark:border-white/20 rounded-full hover:bg-slate-50 dark:hover:bg-white/10">
-                  <app-icon name="mail" [size]="20"></app-icon>
-               </button>
-               <button (click)="startEditing()" class="px-6 py-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold hover:opacity-90 transition-opacity">
-                  Edit Profile
-               </button>
+               @if (!isOwnProfile()) {
+                 <button class="p-2 border border-slate-300 dark:border-white/20 rounded-full hover:bg-slate-50 dark:hover:bg-white/10">
+                    <app-icon name="more-horizontal" [size]="20"></app-icon>
+                 </button>
+                 <button class="p-2 border border-slate-300 dark:border-white/20 rounded-full hover:bg-slate-50 dark:hover:bg-white/10">
+                    <app-icon name="mail" [size]="20"></app-icon>
+                 </button>
+                 @if (isFollowing()) {
+                   <button (click)="unfollowUser()" class="px-6 py-2 rounded-full border border-slate-300 dark:border-white/20 text-slate-900 dark:text-white font-bold hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-500 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+                      Following
+                   </button>
+                 } @else {
+                   <button (click)="followUser()" class="px-6 py-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold hover:opacity-90 transition-opacity">
+                      Follow
+                   </button>
+                 }
+               } @else {
+                 <button (click)="startEditing()" class="px-6 py-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold hover:opacity-90 transition-opacity">
+                    Edit Profile
+                 </button>
+               }
             </div>
          </div>
 
          <!-- Bio & Info -->
          <div class="px-4 mb-6">
             <h2 class="font-bold text-xl text-slate-900 dark:text-white flex items-center gap-1">
-              {{ user().display_name }}
-              @if (user().verify) { <app-icon name="verified" [size]="20" class="text-indigo-500"></app-icon> }
+              {{ p.display_name }}
+              @if (p.verify) { <app-icon name="verified" [size]="20" class="text-indigo-500"></app-icon> }
+              @if (p.account_premium) { 
+                <span class="text-xs bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-0.5 rounded-full font-bold">PRO</span>
+              }
             </h2>
-            <p class="text-slate-500 mb-3">@{{ user().username }}</p>
+            <p class="text-slate-500 mb-3">@{{ p.username }}</p>
             
-            <p class="text-slate-900 dark:text-slate-100 mb-4 whitespace-pre-wrap leading-relaxed">{{ user().bio }}</p>
+            @if (p.bio || p.biography) {
+              <p class="text-slate-900 dark:text-slate-100 mb-4 whitespace-pre-wrap leading-relaxed">{{ p.bio || p.biography }}</p>
+            }
             
-            <div class="flex gap-4 text-sm text-slate-500 mb-4">
-               <div class="flex items-center gap-1">
-                  <app-icon name="map-pin" [size]="16"></app-icon>
-                  <span>San Francisco, CA</span>
-               </div>
-               <div class="flex items-center gap-1">
-                  <app-icon name="calendar" [size]="16"></app-icon>
-                  <span>Joined November 2025</span>
-               </div>
+            <div class="flex flex-wrap gap-4 text-sm text-slate-500 mb-4">
+               @if (p.region) {
+                 <div class="flex items-center gap-1">
+                    <app-icon name="map-pin" [size]="16"></app-icon>
+                    <span>{{ p.region }}</span>
+                 </div>
+               }
+               @if (p.join_date) {
+                 <div class="flex items-center gap-1">
+                    <app-icon name="calendar" [size]="16"></app-icon>
+                    <span>Joined {{ formatJoinDate(p.join_date) }}</span>
+                 </div>
+               }
+               @if (p.status === 'online') {
+                 <div class="flex items-center gap-1 text-green-500">
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span>Online</span>
+                 </div>
+               }
             </div>
 
             <div class="flex gap-6 text-sm">
                <div class="hover:underline cursor-pointer">
-                  <span class="font-bold text-slate-900 dark:text-white">{{ user().following_count }}</span>
+                  <span class="font-bold text-slate-900 dark:text-white">{{ p.following_count }}</span>
                   <span class="text-slate-500 ml-1">Following</span>
                </div>
                <div class="hover:underline cursor-pointer">
-                  <span class="font-bold text-slate-900 dark:text-white">{{ user().followers_count }}</span>
+                  <span class="font-bold text-slate-900 dark:text-white">{{ p.followers_count }}</span>
                   <span class="text-slate-500 ml-1">Followers</span>
                </div>
             </div>
@@ -102,10 +134,32 @@ import { PostCardComponent } from '../components/post-card.component';
 
       <!-- Content -->
       <div>
-         @for (post of socialService.posts(); track post.id) {
-            <app-post-card [post]="post"></app-post-card>
+         @if (isLoadingPosts()) {
+           <div class="p-8 text-center text-slate-500">
+             <div class="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto"></div>
+             <p class="mt-4">Loading posts...</p>
+           </div>
+         } @else if (userPosts().length === 0) {
+           <div class="p-8 text-center text-slate-500">
+             <app-icon name="file-text" [size]="48" class="mx-auto mb-4 opacity-50"></app-icon>
+             <p>No posts yet</p>
+           </div>
+         } @else {
+           @for (post of userPosts(); track post.id) {
+              <app-post-card [post]="post"></app-post-card>
+           }
          }
       </div>
+      } @else if (profileService.isLoading()) {
+        <div class="p-8 text-center">
+          <div class="animate-spin w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto"></div>
+          <p class="mt-4 text-slate-500">Loading profile...</p>
+        </div>
+      } @else {
+        <div class="p-8 text-center text-slate-500">
+          <p>Profile not found</p>
+        </div>
+      }
 
       <!-- Edit Profile Modal -->
       @if (isEditing()) {
@@ -126,28 +180,42 @@ import { PostCardComponent } from '../components/post-card.component';
             
             <!-- Modal Body (Scrollable) -->
             <div class="p-4 space-y-6 overflow-y-auto">
-               <!-- Cover Image Input (Mock) -->
+               <!-- Cover Image Input -->
                <div class="space-y-2">
                   <label class="block text-xs font-bold uppercase text-slate-500 tracking-wider">Cover Image</label>
-                  <div class="relative h-32 bg-slate-200 dark:bg-slate-800 rounded-xl overflow-hidden group cursor-pointer border border-slate-200 dark:border-white/10">
-                     <img [src]="editForm.cover_image" class="w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity">
+                  <input #coverInput type="file" accept="image/*" (change)="onCoverImageSelected($event)" class="hidden">
+                  <div (click)="coverInput.click()" class="relative h-32 bg-slate-200 dark:bg-slate-800 rounded-xl overflow-hidden group cursor-pointer border border-slate-200 dark:border-white/10">
+                     @if (editForm.profile_cover_image) {
+                       <img [src]="editForm.profile_cover_image" class="w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity">
+                     }
                      <div class="absolute inset-0 flex items-center justify-center">
                         <div class="bg-black/50 rounded-full p-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
                            <app-icon name="image" [size]="24"></app-icon>
                         </div>
                      </div>
+                     @if (isUploadingCover()) {
+                       <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
+                         <div class="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full"></div>
+                       </div>
+                     }
                   </div>
                </div>
 
-               <!-- Avatar Input (Mock) -->
+               <!-- Avatar Input -->
                <div class="flex items-center gap-4">
-                  <div class="relative w-20 h-20 rounded-full border-2 border-slate-200 dark:border-white/10 overflow-hidden group cursor-pointer">
+                  <input #avatarInput type="file" accept="image/*" (change)="onAvatarSelected($event)" class="hidden">
+                  <div (click)="avatarInput.click()" class="relative w-20 h-20 rounded-full border-2 border-slate-200 dark:border-white/10 overflow-hidden group cursor-pointer">
                      <img [src]="editForm.avatar" class="w-full h-full object-cover opacity-100 group-hover:opacity-60 transition-opacity">
                      <div class="absolute inset-0 flex items-center justify-center">
                         <div class="bg-black/50 rounded-full p-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
                            <app-icon name="image" [size]="20"></app-icon>
                         </div>
                      </div>
+                     @if (isUploadingAvatar()) {
+                       <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
+                         <div class="animate-spin w-6 h-6 border-4 border-white border-t-transparent rounded-full"></div>
+                       </div>
+                     }
                   </div>
                   <div class="text-sm text-slate-500">
                      <p>Tap to change profile picture.</p>
@@ -157,23 +225,34 @@ import { PostCardComponent } from '../components/post-card.component';
 
                <div class="space-y-4">
                   <div>
+                     <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Username</label>
+                     <input [(ngModel)]="editForm.username" type="text" class="w-full bg-transparent border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all" placeholder="username">
+                  </div>
+
+                  <div>
                      <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Display Name</label>
                      <input [(ngModel)]="editForm.display_name" type="text" class="w-full bg-transparent border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all" placeholder="Your Name">
                   </div>
 
                   <div>
                      <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Bio</label>
-                     <textarea [(ngModel)]="editForm.bio" rows="3" class="w-full bg-transparent border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none resize-none transition-all" placeholder="Tell the world about yourself..."></textarea>
+                     <textarea [(ngModel)]="editForm.bio" rows="3" maxlength="500" class="w-full bg-transparent border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none resize-none transition-all" placeholder="Tell the world about yourself..."></textarea>
+                     <div class="text-xs text-slate-400 mt-1 text-right">{{ editForm.bio.length }}/500</div>
                   </div>
 
                   <div>
-                     <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Location</label>
-                     <input [(ngModel)]="editForm.location" type="text" class="w-full bg-transparent border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all" placeholder="City, Country">
+                     <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Region/Location</label>
+                     <input [(ngModel)]="editForm.region" type="text" class="w-full bg-transparent border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all" placeholder="City, Country">
                   </div>
                   
                   <div>
-                     <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Website</label>
-                     <input type="text" class="w-full bg-transparent border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all" placeholder="https://">
+                     <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Gender</label>
+                     <select [(ngModel)]="editForm.gender" class="w-full bg-transparent border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all">
+                       <option value="hidden">Prefer not to say</option>
+                       <option value="male">Male</option>
+                       <option value="female">Female</option>
+                       <option value="other">Other</option>
+                     </select>
                   </div>
                </div>
             </div>
@@ -209,29 +288,113 @@ import { PostCardComponent } from '../components/post-card.component';
     </div>
   `
 })
-export class ProfileComponent {
-  socialService = inject(SocialService);
-  user = this.socialService.currentUser;
+export class ProfileComponent implements OnInit {
+  profileService = inject(ProfileService);
+  authService = inject(AuthService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
+  profile = signal<UserProfile | null>(null);
+  userPosts = signal<any[]>([]);
+  isLoadingPosts = signal(false);
   isEditing = signal(false);
   showSaveConfirmation = signal(false);
+  isUploadingAvatar = signal(false);
+  isUploadingCover = signal(false);
+  isFollowing = signal(false);
+
+  isOwnProfile = computed(() => {
+    const currentUser = this.authService.currentUser();
+    const viewedProfile = this.profile();
+    return currentUser && viewedProfile && currentUser.id === viewedProfile.uid;
+  });
 
   editForm = {
+    username: '',
     display_name: '',
     bio: '',
     avatar: '',
-    cover_image: '',
-    location: 'San Francisco, CA'
+    profile_cover_image: '',
+    region: '',
+    gender: 'hidden'
   };
 
+  ngOnInit() {
+    this.route.paramMap.subscribe(async params => {
+      const username = params.get('username');
+      if (username) {
+        await this.loadUserProfile(username);
+      } else {
+        await this.loadCurrentUserProfile();
+      }
+    });
+  }
+
+  async loadCurrentUserProfile() {
+    const currentProfile = this.profileService.currentProfile();
+    if (currentProfile) {
+      this.profile.set(currentProfile);
+      await this.loadUserPosts(currentProfile.uid);
+    }
+  }
+
+  async loadUserProfile(username: string) {
+    const userProfile = await this.profileService.getUserProfileByUsername(username);
+    if (userProfile) {
+      this.profile.set(userProfile);
+      await this.loadUserPosts(userProfile.uid);
+      await this.checkFollowStatus(userProfile.uid);
+    }
+  }
+
+  async loadUserPosts(uid: string) {
+    this.isLoadingPosts.set(true);
+    const posts = await this.profileService.getUserPosts(uid);
+    this.userPosts.set(posts);
+    this.isLoadingPosts.set(false);
+  }
+
+  async checkFollowStatus(uid: string) {
+    const following = await this.profileService.isFollowing(uid);
+    this.isFollowing.set(following);
+  }
+
+  async followUser() {
+    const p = this.profile();
+    if (!p) return;
+    
+    const success = await this.profileService.followUser(p.uid);
+    if (success) {
+      this.isFollowing.set(true);
+      // Update follower count
+      this.profile.update(prof => prof ? { ...prof, followers_count: prof.followers_count + 1 } : null);
+    }
+  }
+
+  async unfollowUser() {
+    const p = this.profile();
+    if (!p) return;
+    
+    const success = await this.profileService.unfollowUser(p.uid);
+    if (success) {
+      this.isFollowing.set(false);
+      // Update follower count
+      this.profile.update(prof => prof ? { ...prof, followers_count: Math.max(0, prof.followers_count - 1) } : null);
+    }
+  }
+
   startEditing() {
-    const u = this.user();
+    const p = this.profile();
+    if (!p) return;
+
     this.editForm = {
-      display_name: u.display_name,
-      bio: u.bio || '',
-      avatar: u.avatar,
-      cover_image: u.cover_image || '',
-      location: 'San Francisco, CA'
+      username: p.username,
+      display_name: p.display_name,
+      bio: p.bio || p.biography || '',
+      avatar: p.avatar,
+      profile_cover_image: p.profile_cover_image || '',
+      region: p.region || '',
+      gender: p.gender || 'hidden'
     };
     this.isEditing.set(true);
   }
@@ -245,16 +408,60 @@ export class ProfileComponent {
     this.showSaveConfirmation.set(true);
   }
 
-  saveProfile() {
-    this.socialService.currentUser.update(u => ({
-      ...u,
+  async saveProfile() {
+    const success = await this.profileService.updateProfile({
+      username: this.editForm.username,
       display_name: this.editForm.display_name,
       bio: this.editForm.bio,
       avatar: this.editForm.avatar,
-      cover_image: this.editForm.cover_image
-    }));
-    
-    this.isEditing.set(false);
-    this.showSaveConfirmation.set(false);
+      profile_cover_image: this.editForm.profile_cover_image,
+      region: this.editForm.region,
+      gender: this.editForm.gender
+    });
+
+    if (success) {
+      this.profile.set(this.profileService.currentProfile());
+      this.isEditing.set(false);
+      this.showSaveConfirmation.set(false);
+    }
+  }
+
+  async onAvatarSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    this.isUploadingAvatar.set(true);
+
+    const url = await this.profileService.uploadAvatar(file);
+    if (url) {
+      this.editForm.avatar = url;
+    }
+
+    this.isUploadingAvatar.set(false);
+  }
+
+  async onCoverImageSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    this.isUploadingCover.set(true);
+
+    const url = await this.profileService.uploadCoverImage(file);
+    if (url) {
+      this.editForm.profile_cover_image = url;
+    }
+
+    this.isUploadingCover.set(false);
+  }
+
+  goBack() {
+    this.router.navigate(['/app/feed']);
+  }
+
+  formatJoinDate(dateStr: string): string {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   }
 }

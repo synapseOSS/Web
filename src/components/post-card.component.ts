@@ -5,12 +5,14 @@ import { Router } from '@angular/router';
 import { IconComponent } from './icon.component';
 import { ReactionPickerComponent, ReactionType } from './reaction-picker.component';
 import { ActionMenuComponent, MenuItem } from './action-menu.component';
+import { TextFormatterComponent } from './text-formatter.component';
 import { Post } from '../services/social.service';
+import { TextParserService } from '../services/text-parser.service';
 
 @Component({
   selector: 'app-post-card',
   standalone: true,
-  imports: [CommonModule, IconComponent, ReactionPickerComponent, ActionMenuComponent],
+  imports: [CommonModule, IconComponent, ReactionPickerComponent, ActionMenuComponent, TextFormatterComponent],
   template: `
     <div class="p-3 sm:p-4 border-b border-slate-200 dark:border-white/10 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors cursor-pointer animate-in fade-in duration-300" (click)="navigateToDetail()">
       <div class="flex gap-2 sm:gap-3">
@@ -49,7 +51,12 @@ import { Post } from '../services/social.service';
           <!-- Text -->
           @if (post().post_text) {
             <p class="text-slate-900 dark:text-slate-100 whitespace-pre-wrap mb-3 text-sm sm:text-[15px] leading-relaxed">
-              {{ post().post_text }}
+              <app-text-formatter 
+                [text]="post().post_text"
+                [segments]="parseText(post().post_text)"
+                (mentionClicked)="handleMentionClick($event)"
+                (hashtagClicked)="handleHashtagClick($event)">
+              </app-text-formatter>
             </p>
           }
 
@@ -249,6 +256,7 @@ export class PostCardComponent {
   copied = signal(false);
   
   private router = inject(Router);
+  private textParser = inject(TextParserService);
 
   menuItems: MenuItem[] = [
     { id: 'bookmark', label: 'Bookmark', icon: 'bookmark', show: true },
@@ -360,5 +368,17 @@ export class PostCardComponent {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
     if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
     return num.toString();
+  }
+
+  parseText(text: string) {
+    return this.textParser.parseText(text);
+  }
+
+  handleMentionClick(username: string) {
+    console.log('Mention clicked:', username);
+  }
+
+  handleHashtagClick(tag: string) {
+    console.log('Hashtag clicked:', tag);
   }
 }

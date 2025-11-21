@@ -133,7 +133,7 @@ export class SocialService {
       id: 'p1',
       author_uid: 'u2',
       user: this.users[0],
-      post_text: 'Just deployed the new Synapse node! The speed is incredible compared to traditional servers. ⚡️ #Web3 #Decentralized',
+      post_text: 'Just deployed the new Synapse node! The speed is incredible compared to traditional servers. ⚡️ Thanks @alex_dev for the help! #Web3 #Decentralized #NodeJS',
       media: [
         { type: 'IMAGE', url: 'https://picsum.photos/id/48/800/400' }
       ],
@@ -148,7 +148,7 @@ export class SocialService {
       id: 'p2',
       author_uid: 'u3',
       user: this.users[1],
-      post_text: 'Top 5 reasons to switch to a federated social network:\n1. Data ownership\n2. No algorithmic feed\n3. Privacy first\n4. Community governance\n5. Open source',
+      post_text: 'Top 5 reasons to switch to a federated social network:\n1. Data ownership\n2. No algorithmic feed\n3. Privacy first\n4. Community governance\n5. Open source\n\nShoutout to @sarah_connor and @lens_master for the discussion! #SocialMedia #Privacy #OpenSource',
       media: [],
       likes_count: 890,
       comments_count: 120,
@@ -161,7 +161,7 @@ export class SocialService {
       id: 'p3',
       author_uid: 'u4',
       user: this.users[2],
-      post_text: 'Sunset views from the studio today. 📸 Here are some shots from the session.',
+      post_text: 'Sunset views from the studio today. 📸 Here are some shots from the session. #Photography #Sunset #Nature #Art',
       media: [
          { type: 'IMAGE', url: 'https://picsum.photos/id/56/800/600' },
          { type: 'IMAGE', url: 'https://picsum.photos/id/57/800/600' },
@@ -179,7 +179,7 @@ export class SocialService {
       id: 'p4',
       author_uid: 'u2',
       user: this.users[0],
-      post_text: 'Working on the new UI design. Thoughts? 🎨',
+      post_text: 'Working on the new UI design with @tech_insider. Thoughts? 🎨 #Design #UI #UX #WebDev',
       media: [
          { type: 'IMAGE', url: 'https://picsum.photos/id/101/800/800' },
          { type: 'IMAGE', url: 'https://picsum.photos/id/102/800/800' },

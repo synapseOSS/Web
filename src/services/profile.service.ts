@@ -1,23 +1,46 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, inject, computed } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { AuthService } from './auth.service';
 
 export interface UserProfile {
+  id: string;
   uid: string;
-  username: string;
-  display_name: string;
   email?: string;
+  username: string;
+  nickname?: string;
+  display_name: string;
+  biography?: string;
   bio?: string;
   avatar: string;
+  profile_image_url?: string;
   profile_cover_image?: string;
+  account_premium: boolean;
+  user_level_xp: number;
   verify: boolean;
+  account_type: string;
+  gender: string;
+  banned: boolean;
+  status: string;
+  join_date?: string;
+  last_seen?: string;
   followers_count: number;
   following_count: number;
   posts_count: number;
-  is_following?: boolean;
-  is_followed_by?: boolean;
   region?: string;
-  join_date?: string;
+  is_admin: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ProfileUpdateData {
+  display_name?: string;
+  username?: string;
+  bio?: string;
+  biography?: string;
+  avatar?: string;
+  profile_cover_image?: string;
+  region?: string;
+  gender?: string;
 }
 
 @Injectable({
@@ -26,13 +49,73 @@ export interface UserProfile {
 export class ProfileService {
   private supabase = inject(SupabaseService).client;
   private auth = inject(AuthService);
-  
-  currentProfile = signal<UserProfile | null>(null);
-  viewedProfile = signal<UserProfile | null>(null);
-  loading = signal(false);
 
-  async fetchProfile(username: string) {
-    this.loading.set(true);
+  currentProfile = signal<UserProfile | null>(null);
+  isLoading = signal(false);
+  error = signal<string | null>(null);
+
+  constructor() {
+    // Load profile when user is authenticated
+    const checkUser = () => {
+      const user = this.auth.currentUser();
+      if (user) {
+        this.loadCurrentUserProfile();
+      } else {
+        this.currentProfile.set(null);
+      }
+    };
+    
+    // Initial check
+    checkUser();
+    
+    // Watch for auth changes
+    this.supabase.auth.onAuthStateChange(() => {
+      checkUser();
+    });
+  }
+
+  async loadCurrentUserProfile() {
+    const user = this.auth.currentUser();
+    if (!user) return;
+
+    this.isLoading.set(true);
+    this.error.set(null);
+
+    try {
+      const { data, error } = await this.supabase
+        .from('users')
+        .select('*')
+        .eq('uid', user.id)
+        .single();
+
+      if (error) throw error;
+      
+      this.currentProfile.set(data as UserProfile);
+    } catch (err: any) {
+      console.error('Error loading profile:', err);
+      this.error.set(err.message);
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  async getUserProfile(uid: string): Promise<UserProfile | null> {
+    try {
+      const { data, error } = await this.supabase
+        .from('users')
+        .select('*')
+        .eq('uid', uid)
+        .single();
+
+      if (error) throw error;
+      return data as UserProfile;
+    } catch (err) {
+      console.error('Error fetching user profile:', err);
+      return null;
+    }
+  }
+
+  async getUserProfileByUsername(username: string): Promise<UserProfile | null> {
     try {
       const { data, error } = await this.supabase
         .from('users')
@@ -41,137 +124,100 @@ export class ProfileService {
         .single();
 
       if (error) throw error;
-
-      const currentUserId = this.auth.currentUser()?.id;
-      let isFollowing = false;
-      let isFollowedBy = false;
-
-      if (currentUserId && data.uid !== currentUserId) {
-        isFollowing = await this.checkIfFollowing(currentUserId, data.uid);
-        isFollowedBy = await this.checkIfFollowing(data.uid, currentUserId);
-      }
-
-      const profile = {
-        ...data,
-        is_following: isFollowing,
-        is_followed_by: isFollowedBy
-      };
-
-      this.viewedProfile.set(profile);
-      return profile;
+      return data as UserProfile;
     } catch (err) {
-      console.error('Error fetching profile:', err);
-      throw err;
-    } finally {
-      this.loading.set(false);
+      console.error('Error fetching user profile:', err);
+      return null;
     }
   }
 
-  async fetchCurrentUserProfile() {
-    const userId = this.auth.currentUser()?.id;
-    if (!userId) return;
+  async updateProfile(updates: ProfileUpdateData): Promise<boolean> {
+    const user = this.auth.currentUser();
+    if (!user) {
+      this.error.set('Not authenticated');
+      return false;
+    }
+
+    this.isLoading.set(true);
+    this.error.set(null);
 
     try {
       const { data, error } = await this.supabase
-        .from('users')
-        .select('*')
-        .eq('uid', userId)
-        .single();
-
-      if (error) throw error;
-      this.currentProfile.set(data);
-      return data;
-    } catch (err) {
-      console.error('Error fetching current profile:', err);
-    }
-  }
-
-  async checkIfFollowing(followerId: string, followingId: string): Promise<boolean> {
-    const { data } = await this.supabase
-      .from('follows')
-      .select('id')
-      .eq('follower_id', followerId)
-      .eq('following_id', followingId)
-      .single();
-    return !!data;
-  }
-
-  async updateProfile(updates: Partial<UserProfile>) {
-    const userId = this.auth.currentUser()?.id;
-    if (!userId) throw new Error('Not authenticated');
-
-    try {
-      const { error } = await this.supabase
         .from('users')
         .update({
           ...updates,
           updated_at: new Date().toISOString()
         })
-        .eq('uid', userId);
+        .eq('uid', user.id)
+        .select()
+        .single();
 
       if (error) throw error;
-      await this.fetchCurrentUserProfile();
-    } catch (err) {
+
+      this.currentProfile.set(data as UserProfile);
+      return true;
+    } catch (err: any) {
       console.error('Error updating profile:', err);
-      throw err;
+      this.error.set(err.message);
+      return false;
+    } finally {
+      this.isLoading.set(false);
     }
   }
 
-  async uploadAvatar(file: File): Promise<string> {
-    const userId = this.auth.currentUser()?.id;
-    if (!userId) throw new Error('Not authenticated');
+  async uploadAvatar(file: File): Promise<string | null> {
+    const user = this.auth.currentUser();
+    if (!user) return null;
 
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}_${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
 
       const { error: uploadError } = await this.supabase.storage
-        .from('user-media')
+        .from('profiles')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       const { data } = this.supabase.storage
-        .from('user-media')
+        .from('profiles')
         .getPublicUrl(filePath);
 
-      await this.updateProfile({ avatar: data.publicUrl });
       return data.publicUrl;
     } catch (err) {
       console.error('Error uploading avatar:', err);
-      throw err;
+      return null;
     }
   }
 
-  async uploadCoverImage(file: File): Promise<string> {
-    const userId = this.auth.currentUser()?.id;
-    if (!userId) throw new Error('Not authenticated');
+  async uploadCoverImage(file: File): Promise<string | null> {
+    const user = this.auth.currentUser();
+    if (!user) return null;
 
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}_cover_${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}-cover-${Date.now()}.${fileExt}`;
       const filePath = `covers/${fileName}`;
 
       const { error: uploadError } = await this.supabase.storage
-        .from('user-media')
+        .from('profiles')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       const { data } = this.supabase.storage
-        .from('user-media')
+        .from('profiles')
         .getPublicUrl(filePath);
 
-      await this.updateProfile({ profile_cover_image: data.publicUrl });
       return data.publicUrl;
     } catch (err) {
       console.error('Error uploading cover image:', err);
-      throw err;
+      return null;
     }
   }
 
-  async fetchUserPosts(userId: string) {
+  async getUserPosts(uid: string) {
     try {
       const { data, error } = await this.supabase
         .from('posts')
@@ -182,10 +228,13 @@ export class ProfileService {
             username,
             display_name,
             avatar,
-            verify
+            verify,
+            followers_count,
+            following_count
           )
         `)
-        .eq('author_uid', userId)
+        .eq('author_uid', uid)
+        .eq('is_deleted', false)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -196,7 +245,94 @@ export class ProfileService {
     }
   }
 
-  async fetchFollowers(userId: string) {
+  async followUser(targetUid: string): Promise<boolean> {
+    const user = this.auth.currentUser();
+    if (!user) return false;
+
+    try {
+      const { error } = await this.supabase
+        .from('follows')
+        .insert({
+          follower_id: user.id,
+          following_id: targetUid
+        });
+
+      if (error) throw error;
+
+      // Update counts
+      await this.updateFollowCounts(user.id, targetUid);
+      return true;
+    } catch (err) {
+      console.error('Error following user:', err);
+      return false;
+    }
+  }
+
+  async unfollowUser(targetUid: string): Promise<boolean> {
+    const user = this.auth.currentUser();
+    if (!user) return false;
+
+    try {
+      const { error } = await this.supabase
+        .from('follows')
+        .delete()
+        .eq('follower_id', user.id)
+        .eq('following_id', targetUid);
+
+      if (error) throw error;
+
+      // Update counts
+      await this.updateFollowCounts(user.id, targetUid);
+      return true;
+    } catch (err) {
+      console.error('Error unfollowing user:', err);
+      return false;
+    }
+  }
+
+  async isFollowing(targetUid: string): Promise<boolean> {
+    const user = this.auth.currentUser();
+    if (!user) return false;
+
+    try {
+      const { data, error } = await this.supabase
+        .from('follows')
+        .select('id')
+        .eq('follower_id', user.id)
+        .eq('following_id', targetUid)
+        .single();
+
+      return !!data;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  private async updateFollowCounts(followerId: string, followingId: string) {
+    // Update follower's following_count
+    const { data: followerData } = await this.supabase
+      .from('follows')
+      .select('id')
+      .eq('follower_id', followerId);
+
+    await this.supabase
+      .from('users')
+      .update({ following_count: followerData?.length || 0 })
+      .eq('uid', followerId);
+
+    // Update following's followers_count
+    const { data: followingData } = await this.supabase
+      .from('follows')
+      .select('id')
+      .eq('following_id', followingId);
+
+    await this.supabase
+      .from('users')
+      .update({ followers_count: followingData?.length || 0 })
+      .eq('uid', followingId);
+  }
+
+  async getFollowers(uid: string) {
     try {
       const { data, error } = await this.supabase
         .from('follows')
@@ -208,20 +344,20 @@ export class ProfileService {
             display_name,
             avatar,
             verify,
-            followers_count
+            bio
           )
         `)
-        .eq('following_id', userId);
+        .eq('following_id', uid);
 
       if (error) throw error;
-      return (data || []).map((f: any) => f.users);
+      return data?.map(f => f.users) || [];
     } catch (err) {
       console.error('Error fetching followers:', err);
       return [];
     }
   }
 
-  async fetchFollowing(userId: string) {
+  async getFollowing(uid: string) {
     try {
       const { data, error } = await this.supabase
         .from('follows')
@@ -233,20 +369,16 @@ export class ProfileService {
             display_name,
             avatar,
             verify,
-            followers_count
+            bio
           )
         `)
-        .eq('follower_id', userId);
+        .eq('follower_id', uid);
 
       if (error) throw error;
-      return (data || []).map((f: any) => f.users);
+      return data?.map(f => f.users) || [];
     } catch (err) {
       console.error('Error fetching following:', err);
       return [];
     }
-  }
-
-  constructor() {
-    this.fetchCurrentUserProfile();
   }
 }
