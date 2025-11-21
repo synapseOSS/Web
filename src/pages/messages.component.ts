@@ -31,8 +31,7 @@ import { MessagingService, Chat, Message } from '../services/messaging.service';
 
          <div class="flex-1 overflow-y-auto">
             @for (chat of chats(); track chat.id) {
-               @let partner = chat.participants.find(p => p.uid !== messagingService.auth.currentUser()?.uid);
-               @if (partner) {
+               @if (getPartner(chat); as partner) {
                  <div (click)="selectChat(chat)" 
                       class="p-4 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors flex gap-3 items-center border-r-4 border-transparent"
                       [class.border-indigo-500]="activeChat()?.chat_id === chat.chat_id"
@@ -75,13 +74,12 @@ import { MessagingService, Chat, Message } from '../services/messaging.service';
            [class.hidden]="!activeChat() && isMobile">
         
         @if (activeChat()) {
-          @let partner = activeChat()!.participants.find(p => p.uid !== messagingService.auth.currentUser()?.uid);
           <!-- Chat Header -->
           <div class="p-3 border-b border-slate-200 dark:border-white/10 flex items-center gap-4 sticky top-0 bg-white/80 dark:bg-slate-950/80 backdrop-blur z-10">
              <button (click)="backToList()" class="md:hidden p-2 -ml-2 text-slate-600 dark:text-slate-400">
                 <app-icon name="chevron-left" [size]="24"></app-icon>
              </button>
-             @if (partner) {
+             @if (getPartner(activeChat()!); as partner) {
                <div class="flex items-center gap-3">
                   <img [src]="partner.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + partner.username" class="w-10 h-10 rounded-full object-cover">
                   <div>
@@ -232,5 +230,11 @@ export class MessagesComponent implements OnInit, OnDestroy {
     if (this.activeChat()) {
       this.messagingService.setTypingStatus(this.activeChat()!.chat_id, false);
     }
+  }
+
+  getPartner(chat: Chat | null) {
+    if (!chat) return null;
+    const currentUserId = this.messagingService.auth.currentUser()?.id;
+    return chat.participants.find(p => p.uid !== currentUserId) || null;
   }
 }

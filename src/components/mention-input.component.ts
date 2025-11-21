@@ -1,7 +1,6 @@
 import { Component, input, output, signal, computed, inject, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IconComponent } from './icon.component';
 import { TextParserService } from '../services/text-parser.service';
 import { MentionService } from '../services/mention.service';
 import { HashtagService } from '../services/hashtag.service';
@@ -16,7 +15,7 @@ interface Suggestion {
 @Component({
   selector: 'app-mention-input',
   standalone: true,
-  imports: [CommonModule, FormsModule, IconComponent],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="relative">
       <textarea

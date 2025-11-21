@@ -44,6 +44,17 @@ export interface Post {
   is_liked?: boolean;
   is_bookmarked?: boolean;
   post_type?: 'TEXT' | 'IMAGE' | 'VIDEO';
+  has_location?: boolean;
+  location_name?: string;
+  location_address?: string;
+  location_latitude?: number;
+  location_longitude?: number;
+  collaborators?: Array<{
+    uid: string;
+    username: string;
+    display_name: string;
+    avatar: string;
+  }>;
 }
 
 export interface Chat {
