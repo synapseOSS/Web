@@ -3,7 +3,7 @@
 <html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
   
   <!-- Primary Meta Tags -->
   <title>Synapse | The Neural Network of Social</title>
@@ -12,6 +12,8 @@
   <meta name="keywords" content="social media, PWA, offline-first, decentralized, community, neural network">
   <meta name="author" content="StudioAs Inc.">
   <meta name="robots" content="index, follow">
+  <meta name="googlebot" content="index, follow">
+  <link rel="canonical" href="https://synapse.social/">
   
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
@@ -28,15 +30,23 @@
   <meta property="twitter:image" content="https://synapse.social/og-image.png">
   
   <!-- PWA -->
-  <link rel="manifest" href="/manifest.json">
+  <link rel="manifest" href="/manifest.json" crossorigin="use-credentials">
   <meta name="theme-color" content="#4f46e5">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#4f46e5">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#020617">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Synapse">
-  <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="Synapse">
+  <meta name="msapplication-TileColor" content="#4f46e5">
+  <meta name="msapplication-tap-highlight" content="no">
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.svg">
+  <link rel="mask-icon" href="/icons/icon-192x192.svg" color="#4f46e5">
   
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="/icons/icon-192x192.png">
+  <link rel="icon" type="image/svg+xml" href="/icons/icon-192x192.svg">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {

@@ -1,4 +1,4 @@
-const CACHE_VERSION = '1.0.0';
+const CACHE_VERSION = '1.0.1';
 const CACHE_NAME = `synapse-v${CACHE_VERSION}`;
 const RUNTIME_CACHE = `synapse-runtime-v${CACHE_VERSION}`;
 const IMAGE_CACHE = `synapse-images-v${CACHE_VERSION}`;
@@ -8,7 +8,17 @@ const CORE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/offline.html'
+  '/offline.html',
+  '/404.html',
+  '/robots.txt',
+  '/icons/icon-192x192.svg',
+  '/icons/icon-512x512.svg',
+  '/icons/icon-72x72.svg',
+  '/icons/icon-96x96.svg',
+  '/icons/icon-128x128.svg',
+  '/icons/icon-144x144.svg',
+  '/icons/icon-152x152.svg',
+  '/icons/icon-384x384.svg'
 ];
 
 // Install event - cache core assets
@@ -45,10 +55,15 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (request.method !== 'GET') return;
 
-  // Skip Supabase/Firebase API calls (always fetch fresh)
+  // Skip external CDN and API calls (always fetch fresh)
   if (url.hostname.includes('supabase.co') || 
       url.hostname.includes('firebase') ||
-      url.hostname.includes('firebaseio')) {
+      url.hostname.includes('firebaseio') ||
+      url.hostname.includes('cdn.tailwindcss.com') ||
+      url.hostname.includes('fonts.googleapis.com') ||
+      url.hostname.includes('fonts.gstatic.com') ||
+      url.hostname.includes('esm.sh') ||
+      url.hostname.includes('aistudiocdn.com')) {
     return event.respondWith(
       fetch(request).catch(() => {
         // Return cached data if available when offline
@@ -150,7 +165,7 @@ self.addEventListener('push', (event) => {
   const options = {
     body: data.body || 'You have a new notification',
     icon: '/icons/icon-192x192.svg',
-    badge: '/icons/icon-72x72.png',
+    badge: '/icons/icon-72x72.svg',
     data: data.url || '/',
     actions: [
       { action: 'open', title: 'Open' },

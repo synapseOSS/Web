@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PWA Validation Check</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 900px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #4f46e5;
+      margin-top: 0;
+    }
+    .check-item {
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .check-item.pass {
+      background: #d1fae5;
+      border-left: 4px solid #10b981;
+    }
+    .check-item.fail {
+      background: #fee2e2;
+      border-left: 4px solid #ef4444;
+    }
+    .check-item.warning {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+    }
+    .icon {
+      font-size: 24px;
+      min-width: 30px;
+    }
+    button {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+    button:hover {
+      background: #4338ca;
+    }
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+    .loading.active {
+      display: block;
+    }
+    pre {
+      background: #f8fafc;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+    .section {
+      margin-top: 30px;
+    }
+    .section h2 {
+      color: #334155;
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 PWA Validation Check</h1>
+    <p>This tool validates your Progressive Web App configuration.</p>
+    
+    <button onclick="runChecks()">Run PWA Checks</button>
+    
+    <div class="loading" id="loading">
+      <p>⏳ Running checks...</p>
+    </div>
+    
+    <div id="results"></div>
+  </div>
+
+  <script>
+    async function runChecks() {
+      const resultsDiv = document.getElementById('results');
+      const loadingDiv = document.getElementById('loading');
+      
+      resultsDiv.innerHTML = '';
+      loadingDiv.classList.add('active');
+      
+      const checks = [];
+      
+      // Check 1: Service Worker Support
+      checks.push({
+        name: 'Service Worker Support',
+        status: 'serviceWorker' in navigator ? 'pass' : 'fail',
+        message: 'serviceWorker' in navigator 
+          ? 'Browser supports Service Workers' 
+          : 'Browser does not support Service Workers'
+      });
+      
+      // Check 2: Service Worker Registration
+      let swRegistered = false;
+      try {
+        const registration = await navigator.serviceWorker.getRegistration();
+        swRegistered = !!registration;
+        checks.push({
+          name: 'Service Worker Registration',
+          status: swRegistered ? 'pass' : 'warning',
+          message: swRegistered 
+            ? `Service Worker registered at: ${registration.scope}` 
+            : 'Service Worker not registered yet. Start your dev server.'
+        });
+      } catch (e) {
+        checks.push({
+          name: 'Service Worker Registration',
+          status: 'fail',
+          message: `Error checking registration: ${e.message}`
+        });
+      }
+      
+      // Check 3: Manifest File
+      let manifestValid = false;
+      try {
+        const response = await fetch('/manifest.json');
+        if (response.ok) {
+          const manifest = await response.json();
+          manifestValid = true;
+          checks.push({
+            name: 'Manifest File',
+            status: 'pass',
+            message: `Manifest loaded: "${manifest.name}"`,
+            details: manifest
+          });
+          
+          // Check 4: Manifest Icons
+          if (manifest.icons && manifest.icons.length > 0) {
+            checks.push({
+              name: 'Manifest Icons',
+              status: 'pass',
+              message: `${manifest.icons.length} icons defined`
+            });
+            
+            // Check if icons actually exist
+            for (const icon of manifest.icons.slice(0, 2)) {
+              try {
+                const iconResponse = await fetch(icon.src);
+                checks.push({
+                  name: `Icon: ${icon.src}`,
+                  status: iconResponse.ok ? 'pass' : 'fail',
+                  message: iconResponse.ok 
+                    ? `Icon exists (${icon.sizes})` 
+                    : `Icon not found (${iconResponse.status})`
+                });
+              } catch (e) {
+                checks.push({
+                  name: `Icon: ${icon.src}`,
+                  status: 'fail',
+                  message: `Error loading icon: ${e.message}`
+                });
+              }
+            }
+          } else {
+            checks.push({
+              name: 'Manifest Icons',
+              status: 'fail',
+              message: 'No icons defined in manifest'
+            });
+          }
+          
+          // Check 5: Required Manifest Fields
+          const requiredFields = ['name', 'short_name', 'start_url', 'display', 'icons'];
+          const missingFields = requiredFields.filter(field => !manifest[field]);
+          
+          if (missingFields.length === 0) {
+            checks.push({
+              name: 'Required Manifest Fields',
+              status: 'pass',
+              message: 'All required fields present'
+            });
+          } else {
+            checks.push({
+              name: 'Required Manifest Fields',
+              status: 'fail',
+              message: `Missing fields: ${missingFields.join(', ')}`
+            });
+          }
+        } else {
+          checks.push({
+            name: 'Manifest File',
+            status: 'fail',
+            message: `Failed to load manifest (${response.status})`
+          });
+        }
+      } catch (e) {
+        checks.push({
+          name: 'Manifest File',
+          status: 'fail',
+          message: `Error loading manifest: ${e.message}`
+        });
+      }
+      
+      // Check 6: HTTPS or localhost
+      const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
+      checks.push({
+        name: 'Secure Context',
+        status: isSecure ? 'pass' : 'warning',
+        message: isSecure 
+          ? 'Running on secure context (HTTPS or localhost)' 
+          : 'PWA requires HTTPS in production'
+      });
+      
+      // Check 7: Install Prompt
+      checks.push({
+        name: 'Install Prompt',
+        status: 'warning',
+        message: 'Install prompt availability depends on browser criteria. Check Chrome DevTools > Application > Manifest'
+      });
+      
+      // Check 8: Offline Page
+      try {
+        const offlineResponse = await fetch('/offline.html');
+        checks.push({
+          name: 'Offline Page',
+          status: offlineResponse.ok ? 'pass' : 'fail',
+          message: offlineResponse.ok 
+            ? 'Offline fallback page exists' 
+            : 'Offline page not found'
+        });
+      } catch (e) {
+        checks.push({
+          name: 'Offline Page',
+          status: 'fail',
+          message: `Error checking offline page: ${e.message}`
+        });
+      }
+      
+      // Check 9: 404 Page
+      try {
+        const notFoundResponse = await fetch('/404.html');
+        checks.push({
+          name: '404 Page',
+          status: notFoundResponse.ok ? 'pass' : 'warning',
+          message: notFoundResponse.ok 
+            ? '404 error page exists' 
+            : '404 page not found (optional)'
+        });
+      } catch (e) {
+        checks.push({
+          name: '404 Page',
+          status: 'warning',
+          message: '404 page not found (optional)'
+        });
+      }
+      
+      // Check 10: Robots.txt
+      try {
+        const robotsResponse = await fetch('/robots.txt');
+        checks.push({
+          name: 'Robots.txt',
+          status: robotsResponse.ok ? 'pass' : 'warning',
+          message: robotsResponse.ok 
+            ? 'Robots.txt exists for SEO' 
+            : 'Robots.txt not found (recommended for SEO)'
+        });
+      } catch (e) {
+        checks.push({
+          name: 'Robots.txt',
+          status: 'warning',
+          message: 'Robots.txt not found (recommended for SEO)'
+        });
+      }
+      
+      // Check 11: Viewport Meta Tag
+      const viewportMeta = document.querySelector('meta[name="viewport"]');
+      checks.push({
+        name: 'Viewport Meta Tag',
+        status: viewportMeta ? 'pass' : 'fail',
+        message: viewportMeta 
+          ? `Viewport configured: ${viewportMeta.content}` 
+          : 'Viewport meta tag missing'
+      });
+      
+      // Check 12: Theme Color
+      const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+      checks.push({
+        name: 'Theme Color',
+        status: themeColorMeta ? 'pass' : 'warning',
+        message: themeColorMeta 
+          ? `Theme color set: ${themeColorMeta.content}` 
+          : 'Theme color not set'
+      });
+      
+      loadingDiv.classList.remove('active');
+      
+      // Display results
+      const passCount = checks.filter(c => c.status === 'pass').length;
+      const failCount = checks.filter(c => c.status === 'fail').length;
+      const warnCount = checks.filter(c => c.status === 'warning').length;
+      
+      let html = `
+        <div class="section">
+          <h2>📊 Summary</h2>
+          <p>✅ Passed: ${passCount} | ❌ Failed: ${failCount} | ⚠️ Warnings: ${warnCount}</p>
+        </div>
+        <div class="section">
+          <h2>🔍 Detailed Results</h2>
+      `;
+      
+      checks.forEach(check => {
+        const icon = check.status === 'pass' ? '✅' : check.status === 'fail' ? '❌' : '⚠️';
+        html += `
+          <div class="check-item ${check.status}">
+            <span class="icon">${icon}</span>
+            <div>
+              <strong>${check.name}</strong><br>
+              <span>${check.message}</span>
+              ${check.details ? `<pre>${JSON.stringify(check.details, null, 2)}</pre>` : ''}
+            </div>
+          </div>
+        `;
+      });
+      
+      html += `
+        </div>
+        <div class="section">
+          <h2>📝 Next Steps</h2>
+          <div class="check-item warning">
+            <span class="icon">💡</span>
+            <div>
+              <strong>To test PWA installation:</strong><br>
+              1. Start your dev server<br>
+              2. Open Chrome DevTools (F12)<br>
+              3. Go to Application tab > Manifest<br>
+              4. Check for any errors<br>
+              5. Look for install button in address bar<br>
+              6. Test offline mode by going to Network tab and selecting "Offline"
+            </div>
+          </div>
+        </div>
+      `;
+      
+      resultsDiv.innerHTML = html;
+    }
+  </script>
+</body>
+</html>
