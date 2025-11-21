@@ -267,20 +267,32 @@ export class CommentItemComponent {
     this.replyText.set('');
   }
 
-  handleReaction(type: ReactionType) {
+  async handleReaction(type: ReactionType) {
     const current = this.currentReaction();
+    const commentId = this.comment().id;
+    const userId = this.authService.currentUser()?.id;
     
-    if (current === type) {
-      // Remove reaction
-      this.currentReaction.set(null);
-      this.commentService.unlikeComment(this.comment().id, this.postId());
-    } else {
-      // Add or change reaction
-      this.currentReaction.set(type);
-      this.commentService.likeComment(this.comment().id, this.postId());
+    if (!userId) return;
+
+    try {
+      if (current === type) {
+        // Remove reaction
+        await this.commentService.removeCommentReaction(commentId, userId);
+        this.currentReaction.set(null);
+      } else if (current) {
+        // Change reaction
+        await this.commentService.updateCommentReaction(commentId, userId, type);
+        this.currentReaction.set(type);
+      } else {
+        // Add new reaction
+        await this.commentService.addCommentReaction(commentId, userId, type);
+        this.currentReaction.set(type);
+      }
+      
+      this.commentUpdated.emit();
+    } catch (err) {
+      console.error('Error saving comment reaction:', err);
     }
-    
-    this.commentUpdated.emit();
   }
 
   handleMenuAction(action: string) {

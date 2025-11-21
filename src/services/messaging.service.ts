@@ -41,7 +41,7 @@ export interface Message {
 })
 export class MessagingService {
   private supabase = inject(SupabaseService).client;
-  private auth = inject(AuthService);
+  auth = inject(AuthService);
   
   chats = signal<Chat[]>([]);
   messages = signal<Message[]>([]);
@@ -56,6 +56,15 @@ export class MessagingService {
     if (!userId) return;
 
     try {
+      // First get user's uid from public.users table
+      const { data: userData } = await this.supabase
+        .from('users')
+        .select('uid')
+        .eq('uid', userId)
+        .single();
+
+      if (!userData) return;
+
       const { data, error } = await this.supabase
         .from('chat_participants')
         .select(`
@@ -70,14 +79,14 @@ export class MessagingService {
             last_message_time
           )
         `)
-        .eq('user_id', userId);
+        .eq('user_id', userData.uid);
 
       if (error) throw error;
 
       const chatsWithParticipants = await Promise.all(
         (data || []).map(async (item: any) => {
           const participants = await this.fetchChatParticipants(item.chat_id);
-          const unreadCount = await this.getUnreadCount(item.chat_id, userId);
+          const unreadCount = await this.getUnreadCount(item.chat_id, userData.uid);
           
           return {
             ...item.chats,
@@ -147,6 +156,7 @@ export class MessagingService {
           )
         `)
         .eq('chat_id', chatId)
+        .eq('is_deleted', false)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
@@ -172,6 +182,8 @@ export class MessagingService {
     if (!userId) return;
 
     try {
+      const now = new Date().toISOString();
+      
       const { error } = await this.supabase
         .from('messages')
         .insert({
@@ -179,7 +191,9 @@ export class MessagingService {
           sender_id: userId,
           content,
           message_type: messageType,
-          delivery_status: 'sent'
+          delivery_status: 'sent',
+          created_at: now,
+          message_state: 'sent'
         });
 
       if (error) throw error;
@@ -189,8 +203,9 @@ export class MessagingService {
         .from('chats')
         .update({
           last_message: content,
-          last_message_time: new Date().toISOString(),
-          last_message_sender: userId
+          last_message_time: now,
+          last_message_sender: userId,
+          updated_at: now
         })
         .eq('chat_id', chatId);
 

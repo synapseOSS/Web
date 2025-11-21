@@ -23,6 +23,21 @@ interface Poll {
   duration_hours: number;
 }
 
+interface Location {
+  name: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  place_id?: string;
+}
+
+interface Collaborator {
+  uid: string;
+  username: string;
+  display_name: string;
+  avatar: string;
+}
+
 @Component({
   selector: 'app-compose',
   standalone: true,
@@ -47,7 +62,32 @@ interface Poll {
 
       <div class="p-4 max-w-2xl mx-auto">
          <div class="flex gap-4 mb-4">
-            <img [src]="socialService.currentUser().avatar" class="w-12 h-12 rounded-full object-cover flex-shrink-0">
+            <!-- Avatar with Upload Progress Ring -->
+            <div class="relative flex-shrink-0">
+               @if (isUploading()) {
+                 <!-- Gradient Progress Ring -->
+                 <svg class="absolute inset-0 w-12 h-12 -rotate-90" viewBox="0 0 48 48">
+                   <circle cx="24" cy="24" r="22" fill="none" stroke="currentColor" stroke-width="3" class="text-slate-200 dark:text-slate-800" />
+                   <circle 
+                     cx="24" cy="24" r="22" 
+                     fill="none" 
+                     stroke="url(#gradient)" 
+                     stroke-width="3" 
+                     stroke-linecap="round"
+                     [attr.stroke-dasharray]="138.23"
+                     [attr.stroke-dashoffset]="138.23 - (138.23 * uploadProgress() / 100)"
+                     class="transition-all duration-300" />
+                   <defs>
+                     <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                       <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+                       <stop offset="50%" style="stop-color:#8b5cf6;stop-opacity:1" />
+                       <stop offset="100%" style="stop-color:#ec4899;stop-opacity:1" />
+                     </linearGradient>
+                   </defs>
+                 </svg>
+               }
+               <img [src]="socialService.currentUser().avatar" class="w-12 h-12 rounded-full object-cover">
+            </div>
             <div class="flex-1">
                <app-mention-input
                  #mentionInput
@@ -213,6 +253,47 @@ interface Poll {
             </div>
          }
 
+         <!-- Collaborators Preview -->
+         @if (collaborators().length > 0) {
+            <div class="mb-4 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/10">
+               <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm font-bold text-slate-700 dark:text-slate-300">Collaborators</span>
+                  <button (click)="collaborators.set([])" class="text-xs text-red-500 hover:text-red-600">Remove all</button>
+               </div>
+               <div class="flex flex-wrap gap-2">
+                  @for (collab of collaborators(); track collab.uid) {
+                     <div class="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-white/10">
+                        <img [src]="collab.avatar" class="w-5 h-5 rounded-full">
+                        <span class="text-sm font-medium text-slate-900 dark:text-white">{{ collab.display_name }}</span>
+                        <button (click)="removeCollaborator(collab.uid)" class="text-slate-400 hover:text-red-500">
+                           <app-icon name="x" [size]="14"></app-icon>
+                        </button>
+                     </div>
+                  }
+               </div>
+            </div>
+         }
+
+         <!-- Location Preview -->
+         @if (location()) {
+            <div class="mb-4 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/10">
+               <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                     <app-icon name="map-pin" [size]="18" class="text-indigo-500"></app-icon>
+                     <div>
+                        <div class="text-sm font-bold text-slate-900 dark:text-white">{{ location()!.name }}</div>
+                        @if (location()!.address) {
+                           <div class="text-xs text-slate-500">{{ location()!.address }}</div>
+                        }
+                     </div>
+                  </div>
+                  <button (click)="location.set(null)" class="text-slate-400 hover:text-red-500">
+                     <app-icon name="x" [size]="18"></app-icon>
+                  </button>
+               </div>
+            </div>
+         }
+
          <!-- Action Buttons -->
          <div class="border-t border-slate-200 dark:border-white/10 pt-4">
             <div class="flex items-center gap-2 flex-wrap">
@@ -240,6 +321,48 @@ interface Poll {
                      </span>
                   }
                </button>
+
+               <button 
+                  (click)="showLocationPicker.set(true)"
+                  class="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-slate-600 dark:text-slate-400">
+                  <app-icon name="map-pin" [size]="20"></app-icon>
+                  <span class="text-sm font-medium">Location</span>
+                  @if (location()) {
+                     <span class="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 text-xs font-bold rounded-full">
+                        ✓
+                     </span>
+                  }
+               </button>
+
+               <button 
+                  (click)="showCollaboratorPicker.set(true)"
+                  [disabled]="collaborators().length >= MAX_COLLABORATORS"
+                  class="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-slate-600 dark:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <app-icon name="users" [size]="20"></app-icon>
+                  <span class="text-sm font-medium">Tag People</span>
+                  @if (collaborators().length > 0) {
+                     <span class="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 text-xs font-bold rounded-full">
+                        {{ collaborators().length }}
+                     </span>
+                  }
+               </button>
+
+               <button 
+                  (click)="showPrivacyPicker.set(true)"
+                  class="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-slate-600 dark:text-slate-400">
+                  @switch (postVisibility()) {
+                     @case ('public') {
+                        <app-icon name="globe" [size]="20"></app-icon>
+                     }
+                     @case ('followers') {
+                        <app-icon name="users" [size]="20"></app-icon>
+                     }
+                     @case ('private') {
+                        <app-icon name="lock" [size]="20"></app-icon>
+                     }
+                  }
+                  <span class="text-sm font-medium capitalize">{{ postVisibility() }}</span>
+               </button>
             </div>
             
             <p class="text-xs text-slate-500 mt-3">
@@ -254,6 +377,179 @@ interface Poll {
             </p>
          </div>
       </div>
+
+      <!-- Location Picker Modal -->
+      @if (showLocationPicker()) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" (click)="showLocationPicker.set(false)">
+          <div class="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 dark:border-white/10" (click)="$event.stopPropagation()">
+            <div class="p-4 border-b border-slate-200 dark:border-white/10">
+               <div class="flex items-center justify-between mb-3">
+                  <h3 class="font-bold text-lg text-slate-900 dark:text-white">Add Location</h3>
+                  <button (click)="showLocationPicker.set(false)" class="text-slate-500 hover:text-slate-900 dark:hover:text-white">
+                     <app-icon name="x" [size]="24"></app-icon>
+                  </button>
+               </div>
+               <div class="relative">
+                  <app-icon name="search" [size]="18" class="absolute left-3 top-3 text-slate-400"></app-icon>
+                  <input 
+                     [(ngModel)]="locationSearch"
+                     (input)="searchLocations()"
+                     type="text" 
+                     placeholder="Search for a location..."
+                     class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+               </div>
+            </div>
+            <div class="max-h-96 overflow-y-auto p-2">
+               @if (locationSearch) {
+                 @for (loc of searchResults(); track $index) {
+                    <div 
+                      (click)="selectLocation(loc)"
+                      class="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer transition-colors">
+                       <div class="flex items-start gap-3">
+                          <app-icon name="map-pin" [size]="20" class="text-indigo-500 mt-0.5"></app-icon>
+                          <div class="flex-1 min-w-0">
+                             <div class="font-medium text-slate-900 dark:text-white">{{ loc.name }}</div>
+                             @if (loc.address) {
+                                <div class="text-sm text-slate-500 truncate">{{ loc.address }}</div>
+                             }
+                          </div>
+                       </div>
+                    </div>
+                 }
+               } @else {
+                 <div class="p-8 text-center text-slate-500">
+                    <app-icon name="map-pin" [size]="48" class="mx-auto mb-4 opacity-50"></app-icon>
+                    <p>Search for a location to add to your post</p>
+                 </div>
+               }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Collaborator Picker Modal -->
+      @if (showCollaboratorPicker()) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" (click)="showCollaboratorPicker.set(false)">
+          <div class="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 dark:border-white/10" (click)="$event.stopPropagation()">
+            <div class="p-4 border-b border-slate-200 dark:border-white/10">
+               <div class="flex items-center justify-between mb-3">
+                  <h3 class="font-bold text-lg text-slate-900 dark:text-white">Tag People</h3>
+                  <button (click)="showCollaboratorPicker.set(false)" class="text-slate-500 hover:text-slate-900 dark:hover:text-white">
+                     <app-icon name="x" [size]="24"></app-icon>
+                  </button>
+               </div>
+               <div class="relative">
+                  <app-icon name="search" [size]="18" class="absolute left-3 top-3 text-slate-400"></app-icon>
+                  <input 
+                     [(ngModel)]="collaboratorSearch"
+                     (input)="searchUsers()"
+                     type="text" 
+                     placeholder="Search users..."
+                     class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+               </div>
+            </div>
+            <div class="max-h-96 overflow-y-auto p-2">
+               @if (collaboratorSearch) {
+                 @for (user of searchResults(); track user.uid) {
+                    <div 
+                      (click)="addCollaborator(user)"
+                      class="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer transition-colors">
+                       <div class="flex items-center gap-3">
+                          <img [src]="user.avatar" class="w-10 h-10 rounded-full">
+                          <div class="flex-1 min-w-0">
+                             <div class="font-medium text-slate-900 dark:text-white flex items-center gap-1">
+                                {{ user.display_name }}
+                                @if (user.verify) {
+                                   <app-icon name="verified" [size]="14" class="text-indigo-500"></app-icon>
+                                }
+                             </div>
+                             <div class="text-sm text-slate-500">@{{ user.username }}</div>
+                          </div>
+                          @if (isCollaborator(user.uid)) {
+                             <app-icon name="check" [size]="20" class="text-green-500"></app-icon>
+                          }
+                       </div>
+                    </div>
+                 }
+               } @else {
+                 <div class="p-8 text-center text-slate-500">
+                    <app-icon name="users" [size]="48" class="mx-auto mb-4 opacity-50"></app-icon>
+                    <p>Search for people to tag in your post</p>
+                 </div>
+               }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Privacy Picker Modal -->
+      @if (showPrivacyPicker()) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" (click)="showPrivacyPicker.set(false)">
+          <div class="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 dark:border-white/10" (click)="$event.stopPropagation()">
+            <div class="p-4 border-b border-slate-200 dark:border-white/10">
+               <h3 class="font-bold text-lg text-slate-900 dark:text-white">Post Visibility</h3>
+            </div>
+            <div class="p-2">
+               <div 
+                 (click)="setVisibility('public')"
+                 class="p-4 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer transition-colors"
+                 [class.bg-indigo-50]="postVisibility() === 'public'"
+                 [class.dark:bg-indigo-950/30]="postVisibility() === 'public'">
+                  <div class="flex items-start gap-3">
+                     <app-icon name="globe" [size]="24" class="text-indigo-500 mt-0.5"></app-icon>
+                     <div class="flex-1">
+                        <div class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                           Public
+                           @if (postVisibility() === 'public') {
+                              <app-icon name="check" [size]="18" class="text-indigo-500"></app-icon>
+                           }
+                        </div>
+                        <div class="text-sm text-slate-500 mt-1">Anyone on or off Synapse can see this post</div>
+                     </div>
+                  </div>
+               </div>
+
+               <div 
+                 (click)="setVisibility('followers')"
+                 class="p-4 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer transition-colors"
+                 [class.bg-indigo-50]="postVisibility() === 'followers'"
+                 [class.dark:bg-indigo-950/30]="postVisibility() === 'followers'">
+                  <div class="flex items-start gap-3">
+                     <app-icon name="users" [size]="24" class="text-indigo-500 mt-0.5"></app-icon>
+                     <div class="flex-1">
+                        <div class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                           Followers
+                           @if (postVisibility() === 'followers') {
+                              <app-icon name="check" [size]="18" class="text-indigo-500"></app-icon>
+                           }
+                        </div>
+                        <div class="text-sm text-slate-500 mt-1">Only your followers can see this post</div>
+                     </div>
+                  </div>
+               </div>
+
+               <div 
+                 (click)="setVisibility('private')"
+                 class="p-4 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer transition-colors"
+                 [class.bg-indigo-50]="postVisibility() === 'private'"
+                 [class.dark:bg-indigo-950/30]="postVisibility() === 'private'">
+                  <div class="flex items-start gap-3">
+                     <app-icon name="lock" [size]="24" class="text-indigo-500 mt-0.5"></app-icon>
+                     <div class="flex-1">
+                        <div class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                           Private
+                           @if (postVisibility() === 'private') {
+                              <app-icon name="check" [size]="18" class="text-indigo-500"></app-icon>
+                           }
+                        </div>
+                        <div class="text-sm text-slate-500 mt-1">Only you can see this post</div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `
 })
@@ -283,8 +579,20 @@ export class ComposeComponent {
   pollOptions = signal<string[]>(['', '']);
   pollDuration = 24;
   
+  // New features
+  postVisibility = signal<'public' | 'followers' | 'private'>('public');
+  location = signal<Location | null>(null);
+  collaborators = signal<Collaborator[]>([]);
+  showLocationPicker = signal(false);
+  showCollaboratorPicker = signal(false);
+  showPrivacyPicker = signal(false);
+  locationSearch = '';
+  collaboratorSearch = '';
+  searchResults = signal<any[]>([]);
+  
   readonly MAX_MEDIA = 10;
   readonly MAX_POLL_OPTIONS = 4;
+  readonly MAX_COLLABORATORS = 5;
 
   cancel() {
     this.router.navigate(['/app/feed']);
@@ -460,6 +768,80 @@ export class ComposeComponent {
     console.log('Hashtag added:', tag);
   }
 
+  async searchLocations() {
+    if (!this.locationSearch.trim()) {
+      this.searchResults.set([]);
+      return;
+    }
+
+    // Mock location search - in production, use Google Places API or similar
+    const mockLocations = [
+      { name: this.locationSearch, address: 'City, Country', latitude: 0, longitude: 0 },
+      { name: `${this.locationSearch} Park`, address: 'City, Country', latitude: 0, longitude: 0 },
+      { name: `${this.locationSearch} Mall`, address: 'City, Country', latitude: 0, longitude: 0 }
+    ];
+    this.searchResults.set(mockLocations);
+  }
+
+  selectLocation(loc: any) {
+    this.location.set(loc);
+    this.showLocationPicker.set(false);
+    this.locationSearch = '';
+    this.searchResults.set([]);
+  }
+
+  async searchUsers() {
+    if (!this.collaboratorSearch.trim()) {
+      this.searchResults.set([]);
+      return;
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('users')
+        .select('uid, username, display_name, avatar, verify')
+        .ilike('username', `%${this.collaboratorSearch}%`)
+        .limit(10);
+
+      if (error) throw error;
+      this.searchResults.set(data || []);
+    } catch (err) {
+      console.error('Error searching users:', err);
+    }
+  }
+
+  addCollaborator(user: any) {
+    if (this.collaborators().length >= this.MAX_COLLABORATORS) {
+      alert(`You can only tag up to ${this.MAX_COLLABORATORS} people`);
+      return;
+    }
+
+    if (this.isCollaborator(user.uid)) {
+      this.removeCollaborator(user.uid);
+      return;
+    }
+
+    this.collaborators.update(collabs => [...collabs, {
+      uid: user.uid,
+      username: user.username,
+      display_name: user.display_name,
+      avatar: user.avatar
+    }]);
+  }
+
+  removeCollaborator(uid: string) {
+    this.collaborators.update(collabs => collabs.filter(c => c.uid !== uid));
+  }
+
+  isCollaborator(uid: string): boolean {
+    return this.collaborators().some(c => c.uid === uid);
+  }
+
+  setVisibility(visibility: 'public' | 'followers' | 'private') {
+    this.postVisibility.set(visibility);
+    this.showPrivacyPicker.set(false);
+  }
+
   async submit() {
     if (!this.text.trim() && this.mediaItems().length === 0 && !this.poll()) {
       alert('Please add some content to your post');
@@ -475,23 +857,48 @@ export class ComposeComponent {
         postType = this.mediaItems().some(m => m.type === 'VIDEO') ? 'VIDEO' : 'IMAGE';
       }
 
+      const currentUser = this.socialService.currentUser();
+      
+      // Insert post into database
+      const { data: postData, error: postError } = await this.supabase
+        .from('posts')
+        .insert({
+          author_uid: currentUser.uid,
+          post_text: this.text,
+          post_type: postType,
+          post_visibility: this.postVisibility(),
+          media_items: this.mediaItems(),
+          has_poll: !!this.poll(),
+          poll_question: this.poll()?.question,
+          poll_options: this.poll()?.options.map(o => ({ text: o.text, votes: 0 })),
+          poll_end_time: this.poll() ? new Date(Date.now() + this.poll()!.duration_hours * 60 * 60 * 1000).toISOString() : null,
+          has_location: !!this.location(),
+          location_name: this.location()?.name,
+          location_address: this.location()?.address,
+          location_latitude: this.location()?.latitude,
+          location_longitude: this.location()?.longitude,
+          location_place_id: this.location()?.place_id,
+          created_at: new Date().toISOString(),
+          timestamp: Date.now()
+        })
+        .select()
+        .single();
+
+      if (postError) throw postError;
+
+      // Create the post object for local state
       const newPost: Post = {
-        id: Math.random().toString(36).substring(7),
-        author_uid: this.socialService.currentUser().id,
-        user: this.socialService.currentUser(),
+        id: postData.id,
+        author_uid: currentUser.uid,
+        user: currentUser,
         post_text: this.text,
         media: this.mediaItems(),
         likes_count: 0,
         comments_count: 0,
         views_count: 0,
-        created_at: new Date().toISOString(),
+        created_at: postData.created_at,
         post_type: postType
       };
-
-      // Add poll data if exists
-      if (this.poll()) {
-        (newPost as any).poll = this.poll();
-      }
 
       this.socialService.addPost(newPost);
 
@@ -502,6 +909,20 @@ export class ComposeComponent {
 
       if (this.hashtags().length > 0) {
         await this.hashtagService.createHashtags(this.hashtags(), newPost.id, 'post');
+      }
+
+      // Save collaborators as mentions
+      if (this.collaborators().length > 0) {
+        for (const collab of this.collaborators()) {
+          await this.supabase
+            .from('mentions')
+            .insert({
+              post_id: newPost.id,
+              mentioned_user_id: collab.uid,
+              mentioned_by_user_id: currentUser.uid,
+              mention_type: 'post'
+            });
+        }
       }
 
       this.isPosting.set(false);

@@ -195,4 +195,51 @@ export class CommentService {
       throw err;
     }
   }
+
+  async addCommentReaction(commentId: string, userId: string, reactionType: string) {
+    try {
+      const { error } = await this.supabase
+        .from('comment_reactions')
+        .insert({
+          comment_id: commentId,
+          user_id: userId,
+          reaction_type: reactionType.toLowerCase()
+        });
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error adding comment reaction:', err);
+      throw err;
+    }
+  }
+
+  async updateCommentReaction(commentId: string, userId: string, reactionType: string) {
+    try {
+      const { error } = await this.supabase
+        .from('comment_reactions')
+        .update({ reaction_type: reactionType.toLowerCase() })
+        .eq('comment_id', commentId)
+        .eq('user_id', userId);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error updating comment reaction:', err);
+      throw err;
+    }
+  }
+
+  async removeCommentReaction(commentId: string, userId: string) {
+    try {
+      const { error } = await this.supabase
+        .from('comment_reactions')
+        .delete()
+        .eq('comment_id', commentId)
+        .eq('user_id', userId);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error removing comment reaction:', err);
+      throw err;
+    }
+  }
 }

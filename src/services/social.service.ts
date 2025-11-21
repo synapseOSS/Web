@@ -71,18 +71,16 @@ export class SocialService {
   private supabase = inject(SupabaseService).client;
   private auth = inject(AuthService);
   
-  // Mock Current User
+  // Current User from Auth
   currentUser = signal<User>({
-    id: 'u1',
-    uid: 'curr-user-123',
-    username: 'alex_dev',
-    display_name: 'Alex Chen',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alex',
-    cover_image: 'https://picsum.photos/id/20/1200/400',
-    bio: 'Building the future of decentralized social media. 🚀 #Synapse',
-    verify: true,
-    followers_count: 1205,
-    following_count: 450
+    id: '',
+    uid: '',
+    username: 'loading',
+    display_name: 'Loading...',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=default',
+    verify: false,
+    followers_count: 0,
+    following_count: 0
   });
 
   // Mock Users
@@ -447,9 +445,42 @@ export class SocialService {
   }
 
   constructor() {
+    this.loadCurrentUser();
     this.setupRealtimeSubscriptions();
     this.fetchPosts();
     this.fetchStories();
     this.fetchSuggestedUsers();
+  }
+
+  async loadCurrentUser() {
+    const authUser = this.auth.currentUser();
+    if (!authUser) return;
+
+    try {
+      const { data, error } = await this.supabase
+        .from('users')
+        .select('*')
+        .eq('uid', authUser.id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        this.currentUser.set({
+          id: data.uid,
+          uid: data.uid,
+          username: data.username || 'user',
+          display_name: data.display_name || data.username || 'User',
+          avatar: data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.uid}`,
+          cover_image: data.profile_cover_image,
+          bio: data.bio || data.biography,
+          verify: data.verify || false,
+          followers_count: data.followers_count || 0,
+          following_count: data.following_count || 0
+        });
+      }
+    } catch (err) {
+      console.error('Error loading current user:', err);
+    }
   }
 }

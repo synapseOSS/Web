@@ -17,6 +17,7 @@ import { ProfileComponent } from './pages/profile.component';
 import { EditProfileComponent } from './pages/edit-profile.component';
 import { ComposeComponent } from './pages/compose.component';
 import { PostDetailComponent } from './pages/post-detail.component';
+import { FollowersComponent } from './pages/followers.component';
 import { AboutComponent } from './pages/about.component';
 import { authGuard } from './guards/auth.guard';
 
@@ -32,6 +33,7 @@ export const routes: Routes = [
       { path: 'messages', component: MessagesComponent },
       { path: 'profile', component: ProfileComponent },
       { path: 'profile/:username', component: ProfileComponent },
+      { path: 'profile/:username/:type', component: FollowersComponent },
       { path: 'edit-profile', component: EditProfileComponent },
       { path: 'compose', component: ComposeComponent },
       { path: 'post/:id', component: PostDetailComponent }

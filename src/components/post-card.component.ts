@@ -1,5 +1,5 @@
 
-import { Component, input, signal, computed, inject } from '@angular/core';
+import { Component, input, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { IconComponent } from './icon.component';
@@ -8,6 +8,8 @@ import { ActionMenuComponent, MenuItem } from './action-menu.component';
 import { TextFormatterComponent } from './text-formatter.component';
 import { Post } from '../services/social.service';
 import { TextParserService } from '../services/text-parser.service';
+import { AuthService } from '../services/auth.service';
+import { SupabaseService } from '../services/supabase.service';
 
 @Component({
   selector: 'app-post-card',
@@ -191,6 +193,27 @@ import { TextParserService } from '../services/text-parser.service';
             </div>
           }
 
+          <!-- Location -->
+          @if (post().has_location && post().location_name) {
+            <div class="flex items-center gap-2 text-slate-500 text-sm mb-2 hover:text-indigo-500 transition-colors cursor-pointer" (click)="$event.stopPropagation()">
+              <app-icon name="map-pin" [size]="16"></app-icon>
+              <span>{{ post().location_name }}</span>
+            </div>
+          }
+
+          <!-- Tagged People -->
+          @if (post().collaborators && post().collaborators.length > 0) {
+            <div class="flex items-center gap-2 text-slate-500 text-sm mb-2">
+              <app-icon name="users" [size]="16"></app-icon>
+              <span>with </span>
+              @for (collab of post().collaborators; track collab.uid; let i = $index; let last = $last) {
+                <span class="text-indigo-500 hover:underline cursor-pointer" (click)="navigateToProfile(collab.username, $event)">
+                  {{ collab.display_name }}{{ !last ? ',' : '' }}
+                </span>
+              }
+            </div>
+          }
+
           <!-- Actions -->
           <div class="flex items-center justify-between max-w-md text-slate-500 mt-2" (click)="$event.stopPropagation()">
             <button class="group flex items-center gap-1 sm:gap-2 hover:text-indigo-500 transition-colors" title="Reply">
@@ -257,6 +280,8 @@ export class PostCardComponent {
   
   private router = inject(Router);
   private textParser = inject(TextParserService);
+  private authService = inject(AuthService);
+  private supabase = inject(SupabaseService).client;
 
   menuItems: MenuItem[] = [
     { id: 'bookmark', label: 'Bookmark', icon: 'bookmark', show: true },
@@ -299,24 +324,54 @@ export class PostCardComponent {
     this.router.navigate(['/app/post', this.post().id]);
   }
 
-  handleReaction(type: ReactionType) {
+  navigateToProfile(username: string, event: Event) {
+    event.stopPropagation();
+    this.router.navigate(['/app/profile', username]);
+  }
+
+  async handleReaction(type: ReactionType) {
     const current = this.currentReaction();
+    const postId = this.post().id;
+    const userId = this.authService.currentUser()?.id;
     
-    if (current === type) {
-      // Remove reaction
-      this.currentReaction.set(null);
-      this.likesCount.update(v => Math.max(0, v - 1));
-    } else if (current) {
-      // Change reaction (count stays same)
-      this.currentReaction.set(type);
-    } else {
-      // Add new reaction
-      this.currentReaction.set(type);
-      this.likesCount.update(v => v + 1);
+    if (!userId) return;
+
+    try {
+      if (current === type) {
+        // Remove reaction
+        await this.supabase
+          .from('reactions')
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_id', userId);
+        
+        this.currentReaction.set(null);
+        this.likesCount.update(v => Math.max(0, v - 1));
+      } else if (current) {
+        // Change reaction (update existing)
+        await this.supabase
+          .from('reactions')
+          .update({ reaction_type: type.toLowerCase() })
+          .eq('post_id', postId)
+          .eq('user_id', userId);
+        
+        this.currentReaction.set(type);
+      } else {
+        // Add new reaction
+        await this.supabase
+          .from('reactions')
+          .insert({
+            post_id: postId,
+            user_id: userId,
+            reaction_type: type.toLowerCase()
+          });
+        
+        this.currentReaction.set(type);
+        this.likesCount.update(v => v + 1);
+      }
+    } catch (err) {
+      console.error('Error saving reaction:', err);
     }
-    
-    // TODO: Call API to save reaction
-    console.log('Reaction:', type);
   }
 
   handleMenuAction(action: string) {

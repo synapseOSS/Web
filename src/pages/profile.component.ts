@@ -119,11 +119,11 @@ import { AuthService } from '../services/auth.service';
             </div>
 
             <div class="flex gap-6 text-sm">
-               <div class="hover:underline cursor-pointer">
+               <div (click)="navigateToFollowing()" class="hover:underline cursor-pointer">
                   <span class="font-bold text-slate-900 dark:text-white">{{ p.following_count }}</span>
                   <span class="text-slate-500 ml-1">Following</span>
                </div>
-               <div class="hover:underline cursor-pointer">
+               <div (click)="navigateToFollowers()" class="hover:underline cursor-pointer">
                   <span class="font-bold text-slate-900 dark:text-white">{{ p.followers_count }}</span>
                   <span class="text-slate-500 ml-1">Followers</span>
                </div>
@@ -132,16 +132,48 @@ import { AuthService } from '../services/auth.service';
 
          <!-- Tabs -->
          <div class="flex border-b border-slate-200 dark:border-white/10">
-            <div class="flex-1 text-center py-4 font-bold border-b-4 border-indigo-500 text-slate-900 dark:text-white cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5">
+            <div 
+              (click)="activeTab.set('posts')"
+              [class.border-indigo-500]="activeTab() === 'posts'"
+              [class.text-slate-900]="activeTab() === 'posts'"
+              [class.dark:text-white]="activeTab() === 'posts'"
+              [class.font-bold]="activeTab() === 'posts'"
+              [class.text-slate-500]="activeTab() !== 'posts'"
+              [class.font-medium]="activeTab() !== 'posts'"
+              class="flex-1 text-center py-4 border-b-4 border-transparent cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                Posts
             </div>
-            <div class="flex-1 text-center py-4 font-medium text-slate-500 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5">
+            <div 
+              (click)="activeTab.set('replies')"
+              [class.border-indigo-500]="activeTab() === 'replies'"
+              [class.text-slate-900]="activeTab() === 'replies'"
+              [class.dark:text-white]="activeTab() === 'replies'"
+              [class.font-bold]="activeTab() === 'replies'"
+              [class.text-slate-500]="activeTab() !== 'replies'"
+              [class.font-medium]="activeTab() !== 'replies'"
+              class="flex-1 text-center py-4 border-b-4 border-transparent cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                Replies
             </div>
-            <div class="flex-1 text-center py-4 font-medium text-slate-500 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5">
+            <div 
+              (click)="activeTab.set('media')"
+              [class.border-indigo-500]="activeTab() === 'media'"
+              [class.text-slate-900]="activeTab() === 'media'"
+              [class.dark:text-white]="activeTab() === 'media'"
+              [class.font-bold]="activeTab() === 'media'"
+              [class.text-slate-500]="activeTab() !== 'media'"
+              [class.font-medium]="activeTab() !== 'media'"
+              class="flex-1 text-center py-4 border-b-4 border-transparent cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                Media
             </div>
-            <div class="flex-1 text-center py-4 font-medium text-slate-500 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5">
+            <div 
+              (click)="activeTab.set('likes')"
+              [class.border-indigo-500]="activeTab() === 'likes'"
+              [class.text-slate-900]="activeTab() === 'likes'"
+              [class.dark:text-white]="activeTab() === 'likes'"
+              [class.font-bold]="activeTab() === 'likes'"
+              [class.text-slate-500]="activeTab() !== 'likes'"
+              [class.font-medium]="activeTab() !== 'likes'"
+              class="flex-1 text-center py-4 border-b-4 border-transparent cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                Likes
             </div>
          </div>
@@ -152,16 +184,62 @@ import { AuthService } from '../services/auth.service';
          @if (isLoadingPosts()) {
            <div class="p-8 text-center text-slate-500">
              <div class="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto"></div>
-             <p class="mt-4">Loading posts...</p>
-           </div>
-         } @else if (userPosts().length === 0) {
-           <div class="p-8 text-center text-slate-500">
-             <app-icon name="file-text" [size]="48" class="mx-auto mb-4 opacity-50"></app-icon>
-             <p>No posts yet</p>
+             <p class="mt-4">Loading...</p>
            </div>
          } @else {
-           @for (post of userPosts(); track post.id) {
-              <app-post-card [post]="post"></app-post-card>
+           @switch (activeTab()) {
+             @case ('posts') {
+               @if (userPosts().length === 0) {
+                 <div class="p-8 text-center text-slate-500">
+                   <app-icon name="file-text" [size]="48" class="mx-auto mb-4 opacity-50"></app-icon>
+                   <p>No posts yet</p>
+                 </div>
+               } @else {
+                 @for (post of userPosts(); track post.id) {
+                    <app-post-card [post]="post"></app-post-card>
+                 }
+               }
+             }
+             @case ('replies') {
+               @if (userReplies().length === 0) {
+                 <div class="p-8 text-center text-slate-500">
+                   <app-icon name="message-circle" [size]="48" class="mx-auto mb-4 opacity-50"></app-icon>
+                   <p>No replies yet</p>
+                 </div>
+               } @else {
+                 @for (post of userReplies(); track post.id) {
+                    <app-post-card [post]="post"></app-post-card>
+                 }
+               }
+             }
+             @case ('media') {
+               @if (userMediaPosts().length === 0) {
+                 <div class="p-8 text-center text-slate-500">
+                   <app-icon name="image" [size]="48" class="mx-auto mb-4 opacity-50"></app-icon>
+                   <p>No media posts yet</p>
+                 </div>
+               } @else {
+                 <div class="grid grid-cols-3 gap-1 p-1">
+                   @for (post of userMediaPosts(); track post.id) {
+                     <div (click)="navigateToPost(post.id)" class="aspect-square bg-slate-100 dark:bg-slate-900 rounded overflow-hidden cursor-pointer hover:opacity-80 transition-opacity">
+                       @if (post.media_items && post.media_items.length > 0) {
+                         @if (post.media_items[0].type === 'IMAGE') {
+                           <img [src]="post.media_items[0].url" class="w-full h-full object-cover">
+                         } @else {
+                           <video [src]="post.media_items[0].url" class="w-full h-full object-cover"></video>
+                         }
+                       }
+                     </div>
+                   }
+                 </div>
+               }
+             }
+             @case ('likes') {
+               <div class="p-8 text-center text-slate-500">
+                 <app-icon name="heart" [size]="48" class="mx-auto mb-4 opacity-50"></app-icon>
+                 <p>Liked posts coming soon</p>
+               </div>
+             }
            }
          }
       </div>
@@ -311,12 +389,15 @@ export class ProfileComponent implements OnInit {
 
   profile = signal<UserProfile | null>(null);
   userPosts = signal<any[]>([]);
+  userReplies = signal<any[]>([]);
+  userMediaPosts = signal<any[]>([]);
   isLoadingPosts = signal(false);
   isEditing = signal(false);
   showSaveConfirmation = signal(false);
   isUploadingAvatar = signal(false);
   isUploadingCover = signal(false);
   isFollowing = signal(false);
+  activeTab = signal<'posts' | 'replies' | 'media' | 'likes'>('posts');
 
   isOwnProfile = computed(() => {
     const currentUser = this.authService.currentUser();
@@ -375,7 +456,17 @@ export class ProfileComponent implements OnInit {
   async loadUserPosts(uid: string) {
     this.isLoadingPosts.set(true);
     const posts = await this.profileService.getUserPosts(uid);
+    
+    // Separate posts by type
     this.userPosts.set(posts);
+    
+    // Filter media posts (posts with images or videos)
+    const mediaPosts = posts.filter(p => p.media_items && p.media_items.length > 0);
+    this.userMediaPosts.set(mediaPosts);
+    
+    // TODO: Load replies from comments table
+    this.userReplies.set([]);
+    
     this.isLoadingPosts.set(false);
   }
 
@@ -487,6 +578,22 @@ export class ProfileComponent implements OnInit {
 
   goBack() {
     this.router.navigate(['/app/feed']);
+  }
+
+  navigateToPost(postId: string) {
+    this.router.navigate(['/app/post', postId]);
+  }
+
+  navigateToFollowers() {
+    const p = this.profile();
+    if (!p) return;
+    this.router.navigate(['/app/profile', p.username, 'followers']);
+  }
+
+  navigateToFollowing() {
+    const p = this.profile();
+    if (!p) return;
+    this.router.navigate(['/app/profile', p.username, 'following']);
   }
 
   formatJoinDate(dateStr: string): string {
