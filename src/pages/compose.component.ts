@@ -10,7 +10,7 @@ import { TextParserService } from '../services/text-parser.service';
 import { MentionService } from '../services/mention.service';
 import { HashtagService } from '../services/hashtag.service';
 import { SupabaseService } from '../services/supabase.service';
-import { ImgBBService } from '../services/imgbb.service';
+import { ImageUploadService } from '../services/image-upload.service';
 
 interface PollOption {
   id: string;
@@ -562,7 +562,7 @@ export class ComposeComponent {
   private mentionService = inject(MentionService);
   private hashtagService = inject(HashtagService);
   private supabase = inject(SupabaseService).client;
-  private imgbb = inject(ImgBBService);
+  private imageUpload = inject(ImageUploadService);
   
   text = '';
   mediaItems = signal<MediaItem[]>([]);
@@ -650,8 +650,8 @@ export class ComposeComponent {
     try {
       // Use ImgBB for images, Supabase for videos
       if (file.type.startsWith('image')) {
-        console.log('Uploading image to ImgBB...');
-        const url = await this.imgbb.uploadImage(file);
+        console.log('Uploading image...');
+        const url = await this.imageUpload.uploadImage(file);
         if (url) {
           console.log('✅ Image uploaded:', url);
           return url;

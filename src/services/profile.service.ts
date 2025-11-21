@@ -1,7 +1,7 @@
 import { Injectable, signal, inject, computed } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { AuthService } from './auth.service';
-import { ImgBBService } from './imgbb.service';
+import { ImageUploadService } from './image-upload.service';
 
 export interface UserProfile {
   id: string;
@@ -50,7 +50,7 @@ export interface ProfileUpdateData {
 export class ProfileService {
   private supabase = inject(SupabaseService).client;
   private auth = inject(AuthService);
-  private imgbb = inject(ImgBBService);
+  private imageUpload = inject(ImageUploadService);
 
   currentProfile = signal<UserProfile | null>(null);
   isLoading = signal(false);
@@ -175,12 +175,12 @@ export class ProfileService {
     }
 
     try {
-      console.log('Uploading avatar to ImgBB...');
+      console.log('Uploading avatar...');
       
-      const url = await this.imgbb.uploadImage(file, `avatar-${user.id}`);
+      const url = await this.imageUpload.uploadImage(file, `avatar-${user.id}`);
       
       if (!url) {
-        throw new Error('ImgBB upload failed');
+        throw new Error('Upload failed');
       }
 
       console.log('✅ Avatar uploaded:', url);
@@ -200,12 +200,12 @@ export class ProfileService {
     }
 
     try {
-      console.log('Uploading cover image to ImgBB...');
+      console.log('Uploading cover image...');
       
-      const url = await this.imgbb.uploadImage(file, `cover-${user.id}`);
+      const url = await this.imageUpload.uploadImage(file, `cover-${user.id}`);
       
       if (!url) {
-        throw new Error('ImgBB upload failed');
+        throw new Error('Upload failed');
       }
 
       console.log('✅ Cover image uploaded:', url);

@@ -75,6 +75,9 @@ import { AuthService } from '../services/auth.service';
                    </button>
                  }
                } @else {
+                 <button (click)="navigateToSettings()" class="p-2 border border-slate-300 dark:border-white/20 rounded-full hover:bg-slate-50 dark:hover:bg-white/10">
+                    <app-icon name="settings" [size]="20"></app-icon>
+                 </button>
                  <button (click)="navigateToEditProfile()" class="px-6 py-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold hover:opacity-90 transition-opacity">
                     Edit Profile
                  </button>
@@ -574,6 +577,10 @@ export class ProfileComponent implements OnInit {
 
   navigateToEditProfile() {
     this.router.navigate(['/app/edit-profile']);
+  }
+
+  navigateToSettings() {
+    this.router.navigate(['/app/settings']);
   }
 
   goBack() {
