@@ -1,0 +1,159 @@
+
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Synapse | The Neural Network of Social</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            slate: {
+              850: '#151f32',
+            }
+          },
+          animation: {
+            'float': 'float 6s ease-in-out infinite',
+            'float-delayed': 'float 6s ease-in-out 3s infinite',
+            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'ziggle': 'ziggle 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
+            'spin-slow': 'spin 12s linear infinite',
+          },
+          keyframes: {
+             ziggle: {
+               '0%, 100%': { transform: 'rotate(0deg)' },
+               '25%': { transform: 'rotate(-2deg)' },
+               '75%': { transform: 'rotate(2deg)' },
+             }
+          },
+          transitionTimingFunction: {
+             'spring': 'cubic-bezier(0.25, 0.1, 0.25, 1)',
+             'bounce-sm': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-grid-color: rgba(0, 0, 0, 0.04);
+    }
+    :root.dark {
+      --bg-grid-color: rgba(255, 255, 255, 0.05);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      overflow-x: hidden;
+    }
+    :root.dark body {
+      background-color: #020617;
+      color: #f8fafc;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    
+    /* Hide Scrollbar */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    
+    html, body {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    /* Background Grid */
+    .bg-grid {
+      background-size: 40px 40px;
+      background-image: linear-gradient(to right, var(--bg-grid-color) 1px, transparent 1px),
+                        linear-gradient(to bottom, var(--bg-grid-color) 1px, transparent 1px);
+      mask-image: radial-gradient(circle at center, black, transparent 80%);
+      -webkit-mask-image: radial-gradient(circle at center, black, transparent 80%);
+    }
+
+    /* Keyframes */
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-15px); }
+      100% { transform: translateY(0px); }
+    }
+    
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    
+    /* --- REFINED ANIMATION SYSTEM --- */
+    
+    /* 1. The Base Class: Always present on animated elements. Holds the transition logic. */
+    .anim-entry {
+      /* Smooth iOS-like easing */
+      transition: opacity 1.0s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 1.0s cubic-bezier(0.16, 1, 0.3, 1),
+                  filter 1.0s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: opacity, transform;
+    }
+
+    /* 2. The Hidden State: Applied initially */
+    .anim-hidden {
+      opacity: 0;
+      /* Transforms are handled by specific utility classes below, but we can set defaults here to be safe */
+    }
+
+    /* 3. The Visible State: Applied when scrolled into view */
+    .anim-visible {
+      opacity: 1 !important;
+      transform: translate3d(0, 0, 0) scale(1) !important;
+      filter: blur(0) !important;
+    }
+
+    /* Specific Animations (Start States) */
+    .anim-fade-up { transform: translate3d(0, 40px, 0); }
+    .anim-fade-down { transform: translate3d(0, -40px, 0); }
+    .anim-fade-left { transform: translate3d(40px, 0, 0); }
+    .anim-fade-right { transform: translate3d(-40px, 0, 0); }
+    .anim-zoom-in { transform: scale(0.92); }
+    .anim-scale-up { transform: scale(0.8); }
+    .anim-blur-in { filter: blur(12px); transform: scale(1.02); }
+
+  </style>
+<script type="importmap">
+{
+  "imports": {
+    "rxjs": "https://aistudiocdn.com/rxjs@^7.8.2?conditions=es2015",
+    "rxjs/operators": "https://aistudiocdn.com/rxjs@^7.8.2/operators?conditions=es2015",
+    "rxjs/ajax": "https://aistudiocdn.com/rxjs@^7.8.2/ajax?conditions=es2015",
+    "rxjs/webSocket": "https://aistudiocdn.com/rxjs@^7.8.2/webSocket?conditions=es2015",
+    "rxjs/testing": "https://aistudiocdn.com/rxjs@^7.8.2/testing?conditions=es2015",
+    "rxjs/fetch": "https://aistudiocdn.com/rxjs@^7.8.2/fetch?conditions=es2015",
+    "@angular/common": "https://next.esm.sh/@angular/common@^21.0.0?external=rxjs",
+    "@angular/platform-browser": "https://next.esm.sh/@angular/platform-browser@^21.0.0?external=rxjs",
+    "@angular/core": "https://next.esm.sh/@angular/core@^21.0.0?external=rxjs",
+    "@angular/compiler": "https://next.esm.sh/@angular/compiler@^21.0.0?external=rxjs",
+    "@angular/router": "https://next.esm.sh/@angular/router@^21.0.0?external=rxjs",
+    "@angular/forms": "https://next.esm.sh/@angular/forms@^21.0.0?external=rxjs",
+    "@angular/core/rxjs-interop": "https://next.esm.sh/@angular/core@^21.0.0/rxjs-interop?external=rxjs",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.39.3",
+    "firebase/analytics": "https://next.esm.sh/firebase@^12.6.0/analytics?external=rxjs",
+    "firebase/database": "https://next.esm.sh/firebase@^12.6.0/database?external=rxjs",
+    "firebase/auth": "https://next.esm.sh/firebase@^12.6.0/auth?external=rxjs",
+    "firebase/app": "https://next.esm.sh/firebase@^12.6.0/app?external=rxjs"
+  }
+}
+</script>
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>
