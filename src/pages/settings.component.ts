@@ -9,6 +9,15 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
   selector: 'app-settings',
   standalone: true,
   imports: [CommonModule, IconComponent, FormsModule],
+  styles: [`
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  `],
   template: `
     <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <!-- Header -->
@@ -32,7 +41,42 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
         <div class="grid lg:grid-cols-[280px_1fr] gap-6">
           <!-- Settings Navigation Sidebar -->
           <div class="lg:sticky lg:top-24 h-fit">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+            <!-- Mobile: Horizontal Scrollable Navigation -->
+            <div class="lg:hidden mb-6 -mx-4 px-4">
+              <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                @for (section of settingsSections; track section.id) {
+                  <button
+                    (click)="activeSection.set(section.id)"
+                    [class.bg-gradient-to-r]="activeSection() === section.id"
+                    [class.from-indigo-500]="activeSection() === section.id"
+                    [class.to-purple-500]="activeSection() === section.id"
+                    [class.text-white]="activeSection() === section.id"
+                    [class.shadow-lg]="activeSection() === section.id"
+                    [class.shadow-indigo-500/30]="activeSection() === section.id"
+                    [class.bg-white]="activeSection() !== section.id"
+                    [class.dark:bg-slate-900]="activeSection() !== section.id"
+                    [class.border]="activeSection() !== section.id"
+                    [class.border-slate-200]="activeSection() !== section.id"
+                    [class.dark:border-slate-800]="activeSection() !== section.id"
+                    class="flex-shrink-0 px-4 py-2.5 flex items-center gap-2 rounded-xl transition-all whitespace-nowrap">
+                    <app-icon 
+                      [name]="section.icon" 
+                      [size]="18" 
+                      [class.text-white]="activeSection() === section.id"
+                      [class.text-slate-600]="activeSection() !== section.id"
+                      [class.dark:text-slate-400]="activeSection() !== section.id"></app-icon>
+                    <span 
+                      [class.font-semibold]="activeSection() === section.id"
+                      class="text-sm">
+                      {{ section.title }}
+                    </span>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Desktop: Vertical Navigation -->
+            <div class="hidden lg:block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
               <div class="p-4 border-b border-slate-200 dark:border-slate-800">
                 <h2 class="font-semibold text-sm text-slate-600 dark:text-slate-400 uppercase tracking-wider">Categories</h2>
               </div>
@@ -118,12 +162,6 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
                   <option [value]="provider.id">{{ provider.name }}</option>
                 }
               </select>
-              <div class="flex items-start gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
-                <app-icon name="info" [size]="14" class="text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"></app-icon>
-                <p class="text-xs text-blue-700 dark:text-blue-300">
-                  ImgBB (images only), Cloudinary (images), Cloudflare R2 (all types)
-                </p>
-              </div>
             </div>
 
             <!-- Video Provider -->
@@ -142,12 +180,6 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
                   <option [value]="provider.id">{{ provider.name }}</option>
                 }
               </select>
-              <div class="flex items-start gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
-                <app-icon name="info" [size]="14" class="text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"></app-icon>
-                <p class="text-xs text-blue-700 dark:text-blue-300">
-                  Cloudinary (videos), Cloudflare R2 (all types)
-                </p>
-              </div>
             </div>
 
             <!-- Other Files Provider -->
@@ -166,10 +198,15 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
                   <option [value]="provider.id">{{ provider.name }}</option>
                 }
               </select>
-              <div class="flex items-start gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
-                <app-icon name="info" [size]="14" class="text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"></app-icon>
-                <p class="text-xs text-blue-700 dark:text-blue-300">
-                  Cloudflare R2 only (all file types)
+            </div>
+
+            <!-- Privacy Notice -->
+            <div class="flex items-start gap-3 px-4 py-3 bg-green-50 dark:bg-green-950/20 rounded-xl border border-green-200 dark:border-green-800/50">
+              <app-icon name="shield-check" [size]="18" class="text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0"></app-icon>
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-green-900 dark:text-green-100 mb-1">Privacy Protected</p>
+                <p class="text-xs text-green-700 dark:text-green-300">
+                  All settings are stored locally on your device. We don't collect or store any confidential information.
                 </p>
               </div>
             </div>

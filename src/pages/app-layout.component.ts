@@ -1,15 +1,17 @@
 
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../components/icon.component';
 import { AuthService } from '../services/auth.service';
 import { SocialService } from '../services/social.service';
+import { SearchService, SearchResult } from '../services/search.service';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, IconComponent],
+  imports: [CommonModule, RouterModule, IconComponent, FormsModule],
   template: `
     @if (isLaunching()) {
       <!-- Launcher Splash Screen -->
@@ -199,12 +201,128 @@ import { SocialService } from '../services/social.service';
         </aside>
 
         <!-- Mobile Bottom Nav -->
-        <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-950/90 backdrop-blur-lg border-t border-slate-200 dark:border-white/10 px-6 py-3 flex justify-between items-center z-50">
+        <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-950/90 backdrop-blur-lg border-t border-slate-200 dark:border-white/10 px-4 py-3 flex justify-between items-center z-50">
           <a routerLink="/app/feed" routerLinkActive="text-indigo-600 dark:text-indigo-400" class="p-2 text-slate-500 dark:text-slate-400"><app-icon name="globe" [size]="24"></app-icon></a>
+          <button (click)="toggleMobileSearch()" [class.text-indigo-600]="showMobileSearch()" [class.dark:text-indigo-400]="showMobileSearch()" class="p-2 text-slate-500 dark:text-slate-400 transition-colors"><app-icon name="search" [size]="24"></app-icon></button>
           <a routerLink="/app/explore" routerLinkActive="text-indigo-600 dark:text-indigo-400" class="p-2 text-slate-500 dark:text-slate-400"><app-icon name="hash" [size]="24"></app-icon></a>
           <a routerLink="/app/messages" routerLinkActive="text-indigo-600 dark:text-indigo-400" class="p-2 text-slate-500 dark:text-slate-400"><app-icon name="mail" [size]="24"></app-icon></a>
           <a routerLink="/app/profile" routerLinkActive="text-indigo-600 dark:text-indigo-400" class="p-2 text-slate-500 dark:text-slate-400"><app-icon name="users" [size]="24"></app-icon></a>
         </div>
+
+        <!-- Mobile Search Overlay -->
+        @if (showMobileSearch()) {
+          <div class="md:hidden fixed inset-0 z-[60] bg-white dark:bg-slate-950 animate-in slide-in-from-bottom duration-300">
+            <!-- Header -->
+            <div class="sticky top-0 bg-white/95 dark:bg-slate-950/95 backdrop-blur-lg border-b border-slate-200 dark:border-white/10 px-4 py-3 flex items-center gap-3">
+              <button (click)="toggleMobileSearch()" class="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+                <app-icon name="arrow-left" [size]="24" class="text-slate-700 dark:text-slate-300"></app-icon>
+              </button>
+              <div class="flex-1 relative">
+                <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                  <app-icon name="search" [size]="20"></app-icon>
+                </div>
+                <input 
+                  #mobileSearchInput
+                  type="text" 
+                  [(ngModel)]="mobileSearchQuery"
+                  (input)="onMobileSearch()"
+                  placeholder="Search Synapse" 
+                  class="w-full bg-slate-100 dark:bg-slate-900 border border-transparent focus:border-indigo-500 rounded-full py-2.5 pl-10 pr-10 outline-none transition-all placeholder-slate-500 dark:text-white">
+                @if (mobileSearchQuery()) {
+                  <button 
+                    (click)="clearMobileSearch()" 
+                    class="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors">
+                    <app-icon name="x" [size]="16" class="text-slate-500"></app-icon>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Search Results -->
+            <div class="overflow-y-auto h-[calc(100vh-64px)] px-4 py-4">
+              @if (isSearching()) {
+                <div class="flex items-center justify-center py-12">
+                  <div class="w-8 h-8 border-3 border-slate-200 dark:border-slate-800 border-t-indigo-500 rounded-full animate-spin"></div>
+                </div>
+              } @else if (mobileSearchQuery() && searchResults().length === 0) {
+                <div class="text-center py-12">
+                  <div class="inline-flex p-4 bg-slate-100 dark:bg-slate-900 rounded-2xl mb-4">
+                    <app-icon name="search" [size]="48" class="text-slate-400"></app-icon>
+                  </div>
+                  <h3 class="font-bold text-lg text-slate-900 dark:text-white mb-2">No results found</h3>
+                  <p class="text-slate-600 dark:text-slate-400">Try searching for something else</p>
+                </div>
+              } @else if (searchResults().length > 0) {
+                <div class="space-y-1">
+                  @for (result of searchResults(); track result.data.id) {
+                    <div class="p-4 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-xl transition-colors cursor-pointer">
+                      @if (result.type === 'user') {
+                        <div class="flex items-center gap-3">
+                          <div class="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden flex-shrink-0">
+                            <img [src]="result.data.avatar" [alt]="result.data.display_name" class="w-full h-full object-cover">
+                          </div>
+                          <div class="flex-1 min-w-0">
+                            <div class="font-bold text-slate-900 dark:text-white truncate">{{ result.data.display_name }}</div>
+                            <div class="text-sm text-slate-500 truncate">@{{ result.data.username }}</div>
+                          </div>
+                        </div>
+                      } @else if (result.type === 'hashtag') {
+                        <div class="flex items-center gap-3">
+                          <div class="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-950 flex items-center justify-center flex-shrink-0">
+                            <app-icon name="hash" [size]="24" class="text-indigo-600 dark:text-indigo-400"></app-icon>
+                          </div>
+                          <div class="flex-1 min-w-0">
+                            <div class="font-bold text-slate-900 dark:text-white">#{{ result.data.name }}</div>
+                            <div class="text-sm text-slate-500">{{ result.data.post_count || 0 }} posts</div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              } @else {
+                <div class="space-y-6">
+                  <!-- Recent Searches -->
+                  @if (recentSearches().length > 0) {
+                    <div>
+                      <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-bold text-slate-900 dark:text-white">Recent</h3>
+                        <button (click)="clearRecentSearches()" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Clear all</button>
+                      </div>
+                      <div class="space-y-1">
+                        @for (query of recentSearches(); track query) {
+                          <button 
+                            (click)="searchRecent(query)"
+                            class="w-full flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-xl transition-colors text-left">
+                            <app-icon name="clock" [size]="20" class="text-slate-400"></app-icon>
+                            <span class="flex-1 text-slate-900 dark:text-white">{{ query }}</span>
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  <!-- Trending -->
+                  <div>
+                    <h3 class="font-bold text-slate-900 dark:text-white mb-3">Trending</h3>
+                    <div class="space-y-1">
+                      <div class="p-3 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-xl transition-colors cursor-pointer">
+                        <div class="text-xs text-slate-500 mb-1">Technology · Trending</div>
+                        <div class="font-bold text-slate-900 dark:text-white">#WebDevelopment</div>
+                        <div class="text-xs text-slate-500">12.5K posts</div>
+                      </div>
+                      <div class="p-3 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-xl transition-colors cursor-pointer">
+                        <div class="text-xs text-slate-500 mb-1">Design · Trending</div>
+                        <div class="font-bold text-slate-900 dark:text-white">#UIDesign</div>
+                        <div class="text-xs text-slate-500">8.2K posts</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
       </div>
     }
   `,
@@ -224,14 +342,68 @@ import { SocialService } from '../services/social.service';
 export class AppLayoutComponent implements OnInit {
   authService = inject(AuthService);
   socialService = inject(SocialService);
+  searchService = inject(SearchService);
   
   isLaunching = signal(true);
   progress = signal(0);
   statusText = signal('Initializing...');
 
+  // Mobile search
+  showMobileSearch = signal(false);
+  mobileSearchQuery = signal('');
+  isSearching = signal(false);
+  searchResults = signal<SearchResult[]>([]);
+  recentSearches = signal<string[]>([]);
+
+  @ViewChild('mobileSearchInput') mobileSearchInput?: ElementRef<HTMLInputElement>;
+
   ngOnInit() {
     // Simulate launcher sequence
     this.runLauncherSequence();
+    // Load recent searches
+    this.recentSearches.set(this.searchService.recentSearches());
+  }
+
+  toggleMobileSearch() {
+    this.showMobileSearch.update(v => !v);
+    if (this.showMobileSearch()) {
+      // Focus input after animation
+      setTimeout(() => {
+        this.mobileSearchInput?.nativeElement.focus();
+      }, 100);
+    } else {
+      // Clear search when closing
+      this.clearMobileSearch();
+    }
+  }
+
+  async onMobileSearch() {
+    const query = this.mobileSearchQuery().trim();
+    if (!query) {
+      this.searchResults.set([]);
+      return;
+    }
+
+    this.isSearching.set(true);
+    await this.searchService.search(query);
+    this.searchResults.set(this.searchService.searchResults());
+    this.recentSearches.set(this.searchService.recentSearches());
+    this.isSearching.set(false);
+  }
+
+  clearMobileSearch() {
+    this.mobileSearchQuery.set('');
+    this.searchResults.set([]);
+  }
+
+  searchRecent(query: string) {
+    this.mobileSearchQuery.set(query);
+    this.onMobileSearch();
+  }
+
+  clearRecentSearches() {
+    this.searchService.clearRecentSearches();
+    this.recentSearches.set([]);
   }
 
   logout() {

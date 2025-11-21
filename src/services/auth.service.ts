@@ -15,17 +15,29 @@ export class AuthService {
   isLoading = signal(true);
 
   constructor() {
-    // Initialize session
-    this.supabase.auth.getSession().then(({ data: { session } }) => {
-      this.setSession(session);
-      this.isLoading.set(false);
-    });
+    this.initializeAuth();
+  }
 
-    // Listen for changes
-    this.supabase.auth.onAuthStateChange((_event, session) => {
+  private async initializeAuth() {
+    try {
+      // Get current session from Supabase (checks localStorage automatically)
+      const { data: { session }, error } = await this.supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Error getting session:', error);
+      }
+      
       this.setSession(session);
       this.isLoading.set(false);
-    });
+
+      // Listen for auth state changes
+      this.supabase.auth.onAuthStateChange((_event, session) => {
+        this.setSession(session);
+      });
+    } catch (error) {
+      console.error('Error initializing auth:', error);
+      this.isLoading.set(false);
+    }
   }
 
   private setSession(session: Session | null) {

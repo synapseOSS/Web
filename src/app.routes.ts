@@ -23,6 +23,13 @@ import { AboutComponent } from './pages/about.component';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
+  // Settings Page (Standalone, No Layout)
+  { 
+    path: 'app/settings', 
+    component: SettingsComponent,
+    canActivate: [authGuard]
+  },
+
   // Web App Routes (Protected, No Landing Navbar/Footer)
   { 
     path: 'app', 
@@ -36,7 +43,6 @@ export const routes: Routes = [
       { path: 'profile/:username', component: ProfileComponent },
       { path: 'profile/:username/:type', component: FollowersComponent },
       { path: 'edit-profile', component: EditProfileComponent },
-      { path: 'settings', component: SettingsComponent },
       { path: 'compose', component: ComposeComponent },
       { path: 'post/:id', component: PostDetailComponent }
     ]
