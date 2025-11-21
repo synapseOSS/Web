@@ -39,8 +39,23 @@ import { AuthService } from '../services/auth.service';
          
          <!-- Avatar & Actions -->
          <div class="px-4 flex justify-between items-end relative -mt-12 mb-4">
-            <div class="w-32 h-32 rounded-full border-4 border-white dark:border-slate-950 overflow-hidden bg-white dark:bg-slate-900">
-               <img [src]="p.avatar" class="w-full h-full object-cover">
+            <div class="relative">
+               <!-- Circular Progress Ring -->
+               <div class="absolute inset-0 rounded-full p-1" [style.background]="getProfileAgeGradient()">
+                  <div class="w-full h-full rounded-full bg-white dark:bg-slate-950"></div>
+               </div>
+               
+               <!-- Avatar -->
+               <div class="relative w-32 h-32 rounded-full border-4 border-white dark:border-slate-950 overflow-hidden bg-white dark:bg-slate-900">
+                  <img [src]="p.avatar" class="w-full h-full object-cover">
+               </div>
+               
+               <!-- Age Badge -->
+               @if (p.join_date) {
+                  <div class="absolute -bottom-1 -right-1 px-2 py-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-bold rounded-full shadow-lg border-2 border-white dark:border-slate-950">
+                     {{ getProfileAgeLabel() }}
+                  </div>
+               }
             </div>
             <div class="mb-4 flex gap-2">
                @if (!isOwnProfile()) {
@@ -331,10 +346,20 @@ export class ProfileComponent implements OnInit {
   }
 
   async loadCurrentUserProfile() {
-    const currentProfile = this.profileService.currentProfile();
+    // Wait for profile to load if not already loaded
+    let currentProfile = this.profileService.currentProfile();
+    
+    if (!currentProfile) {
+      // Profile not loaded yet, try to load it
+      await this.profileService.loadCurrentUserProfile();
+      currentProfile = this.profileService.currentProfile();
+    }
+    
     if (currentProfile) {
       this.profile.set(currentProfile);
       await this.loadUserPosts(currentProfile.uid);
+    } else {
+      console.error('Failed to load current user profile');
     }
   }
 
@@ -467,5 +492,57 @@ export class ProfileComponent implements OnInit {
   formatJoinDate(dateStr: string): string {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }
+
+  getProfileAge(): number {
+    const p = this.profile();
+    if (!p || !p.join_date) return 0;
+    
+    const joinDate = new Date(p.join_date);
+    const now = new Date();
+    const diffMs = now.getTime() - joinDate.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    // Return percentage (0-100) based on days, capped at 365 days = 100%
+    return Math.min((diffDays / 365) * 100, 100);
+  }
+
+  getProfileAgeGradient(): string {
+    const age = this.getProfileAge();
+    
+    // Gradient colors based on age
+    if (age < 25) {
+      // New user: Blue to Cyan
+      return 'conic-gradient(from 0deg, #3b82f6, #06b6d4, transparent ' + age + '%)';
+    } else if (age < 50) {
+      // Growing: Cyan to Green
+      return 'conic-gradient(from 0deg, #06b6d4, #10b981, transparent ' + age + '%)';
+    } else if (age < 75) {
+      // Established: Green to Yellow
+      return 'conic-gradient(from 0deg, #10b981, #f59e0b, transparent ' + age + '%)';
+    } else {
+      // Veteran: Yellow to Purple
+      return 'conic-gradient(from 0deg, #f59e0b, #a855f7, transparent ' + age + '%)';
+    }
+  }
+
+  getProfileAgeLabel(): string {
+    const p = this.profile();
+    if (!p || !p.join_date) return '';
+    
+    const joinDate = new Date(p.join_date);
+    const now = new Date();
+    const diffMs = now.getTime() - joinDate.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 30) {
+      return `${diffDays} days`;
+    } else if (diffDays < 365) {
+      const months = Math.floor(diffDays / 30);
+      return `${months} month${months > 1 ? 's' : ''}`;
+    } else {
+      const years = Math.floor(diffDays / 365);
+      return `${years} year${years > 1 ? 's' : ''}`;
+    }
   }
 }

@@ -297,6 +297,13 @@ export class EditProfileComponent implements OnInit {
       return;
     }
 
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.editForm.avatar = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+
     this.isUploadingAvatar.set(true);
     this.errorMessage.set(null);
 
@@ -331,6 +338,13 @@ export class EditProfileComponent implements OnInit {
       this.showError('Please select an image file');
       return;
     }
+
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.editForm.profile_cover_image = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
 
     this.isUploadingCover.set(true);
     this.errorMessage.set(null);
