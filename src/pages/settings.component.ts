@@ -10,73 +10,169 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
   standalone: true,
   imports: [CommonModule, IconComponent, FormsModule],
   template: `
-    <div class="min-h-screen border-x border-slate-200 dark:border-white/10 pb-20">
+    <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <!-- Header -->
-      <div class="sticky top-0 z-20 backdrop-blur-md bg-white/80 dark:bg-slate-950/80 px-4 py-3 flex items-center gap-4 border-b border-slate-200 dark:border-white/10">
-        <button (click)="goBack()" class="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors">
-          <app-icon name="arrow-left" [size]="24"></app-icon>
-        </button>
-        <h1 class="font-bold text-xl text-slate-900 dark:text-white">Settings</h1>
+      <div class="sticky top-0 z-30 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 border-b border-slate-200/50 dark:border-slate-800/50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div class="flex items-center gap-4">
+            <button (click)="goBack()" class="p-2.5 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all hover:scale-105 active:scale-95">
+              <app-icon name="arrow-left" [size]="22" class="text-slate-700 dark:text-slate-300"></app-icon>
+            </button>
+            <div class="flex-1">
+              <h1 class="font-bold text-2xl bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
+                Settings
+              </h1>
+              <p class="text-sm text-slate-600 dark:text-slate-400 mt-0.5">Customize your experience</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="px-4 py-6 space-y-6 max-w-2xl">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24">
+        <div class="grid lg:grid-cols-[280px_1fr] gap-6">
+          <!-- Settings Navigation Sidebar -->
+          <div class="lg:sticky lg:top-24 h-fit">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+              <div class="p-4 border-b border-slate-200 dark:border-slate-800">
+                <h2 class="font-semibold text-sm text-slate-600 dark:text-slate-400 uppercase tracking-wider">Categories</h2>
+              </div>
+              <nav class="p-2">
+                @for (section of settingsSections; track section.id) {
+                  <button
+                    (click)="activeSection.set(section.id)"
+                    [class.bg-gradient-to-r]="activeSection() === section.id"
+                    [class.from-indigo-500]="activeSection() === section.id"
+                    [class.to-purple-500]="activeSection() === section.id"
+                    [class.text-white]="activeSection() === section.id"
+                    [class.shadow-lg]="activeSection() === section.id"
+                    [class.shadow-indigo-500/30]="activeSection() === section.id"
+                    class="w-full px-4 py-3 mb-1 flex items-center gap-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group relative overflow-hidden">
+                    @if (activeSection() === section.id) {
+                      <div class="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 animate-pulse"></div>
+                    }
+                    <div class="relative z-10 flex items-center gap-3 flex-1">
+                      <app-icon 
+                        [name]="section.icon" 
+                        [size]="20" 
+                        [class.text-white]="activeSection() === section.id"
+                        [class.text-slate-600]="activeSection() !== section.id"
+                        [class.dark:text-slate-400]="activeSection() !== section.id"
+                        class="transition-transform group-hover:scale-110"></app-icon>
+                      <span 
+                        [class.font-semibold]="activeSection() === section.id"
+                        class="text-sm transition-all">
+                        {{ section.title }}
+                      </span>
+                    </div>
+                    @if (activeSection() === section.id) {
+                      <div class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></div>
+                    }
+                  </button>
+                }
+              </nav>
+            </div>
+          </div>
+
+          <!-- Active Section Content -->
+          <div class="min-h-[600px]">
+            @switch (activeSection()) {
+              @case ('upload') {
+                <div class="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+        <!-- Section Header -->
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Upload Providers</h2>
+          <p class="text-slate-600 dark:text-slate-400">Configure file upload services for different media types</p>
+        </div>
+
         <!-- Provider Selection by File Type -->
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 space-y-4">
-          <div class="flex items-start gap-3">
-            <div class="p-2 bg-purple-100 dark:bg-purple-950 rounded-lg">
-              <app-icon name="cloud" [size]="24" class="text-purple-600 dark:text-purple-400"></app-icon>
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+          <div class="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 dark:from-purple-500/5 dark:to-indigo-500/5 px-6 py-4 border-b border-slate-200 dark:border-slate-800">
+            <div class="flex items-center gap-3">
+              <div class="p-2.5 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl shadow-lg shadow-purple-500/30">
+                <app-icon name="cloud" [size]="22" class="text-white"></app-icon>
+              </div>
+              <div class="flex-1">
+                <h3 class="font-bold text-lg text-slate-900 dark:text-white">Provider Selection</h3>
+                <p class="text-sm text-slate-600 dark:text-slate-400">
+                  Choose different providers for each file type
+                </p>
+              </div>
             </div>
-            <div class="flex-1">
-              <h2 class="font-bold text-lg text-slate-900 dark:text-white mb-1">Upload Providers by File Type</h2>
-              <p class="text-sm text-slate-600 dark:text-slate-400">
-                Choose different providers for photos, videos, and other files
-              </p>
+          </div>
+          
+          <div class="p-6 space-y-5">
+
+            <!-- Photo Provider -->
+            <div class="space-y-2.5">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">📷</span>
+                <label class="block text-sm font-bold text-slate-900 dark:text-white">
+                  Photo Provider
+                </label>
+              </div>
+              <select 
+                [(ngModel)]="photoProvider"
+                (change)="onProviderChange()"
+                class="w-full bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer font-medium">
+                @for (provider of photoProviders; track provider.id) {
+                  <option [value]="provider.id">{{ provider.name }}</option>
+                }
+              </select>
+              <div class="flex items-start gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                <app-icon name="info" [size]="14" class="text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"></app-icon>
+                <p class="text-xs text-blue-700 dark:text-blue-300">
+                  ImgBB (images only), Cloudinary (images), Cloudflare R2 (all types)
+                </p>
+              </div>
             </div>
-          </div>
 
-          <!-- Photo Provider -->
-          <div class="space-y-2">
-            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-              📷 Photo Provider
-            </label>
-            <select 
-              [(ngModel)]="photoProvider"
-              (change)="onProviderChange()"
-              class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-3 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all">
-              @for (provider of providers; track provider.id) {
-                <option [value]="provider.id">{{ provider.name }}</option>
-              }
-            </select>
-          </div>
+            <!-- Video Provider -->
+            <div class="space-y-2.5">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">🎥</span>
+                <label class="block text-sm font-bold text-slate-900 dark:text-white">
+                  Video Provider
+                </label>
+              </div>
+              <select 
+                [(ngModel)]="videoProvider"
+                (change)="onProviderChange()"
+                class="w-full bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer font-medium">
+                @for (provider of videoProviders; track provider.id) {
+                  <option [value]="provider.id">{{ provider.name }}</option>
+                }
+              </select>
+              <div class="flex items-start gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                <app-icon name="info" [size]="14" class="text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"></app-icon>
+                <p class="text-xs text-blue-700 dark:text-blue-300">
+                  Cloudinary (videos), Cloudflare R2 (all types)
+                </p>
+              </div>
+            </div>
 
-          <!-- Video Provider -->
-          <div class="space-y-2">
-            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-              🎥 Video Provider
-            </label>
-            <select 
-              [(ngModel)]="videoProvider"
-              (change)="onProviderChange()"
-              class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-3 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all">
-              @for (provider of providers; track provider.id) {
-                <option [value]="provider.id">{{ provider.name }}</option>
-              }
-            </select>
-          </div>
-
-          <!-- Other Files Provider -->
-          <div class="space-y-2">
-            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-              📄 Other Files Provider
-            </label>
-            <select 
-              [(ngModel)]="otherProvider"
-              (change)="onProviderChange()"
-              class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-3 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all">
-              @for (provider of providers; track provider.id) {
-                <option [value]="provider.id">{{ provider.name }}</option>
-              }
-            </select>
+            <!-- Other Files Provider -->
+            <div class="space-y-2.5">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">📄</span>
+                <label class="block text-sm font-bold text-slate-900 dark:text-white">
+                  Other Files Provider
+                </label>
+              </div>
+              <select 
+                [(ngModel)]="otherProvider"
+                (change)="onProviderChange()"
+                class="w-full bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer font-medium">
+                @for (provider of otherProviders; track provider.id) {
+                  <option [value]="provider.id">{{ provider.name }}</option>
+                }
+              </select>
+              <div class="flex items-start gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                <app-icon name="info" [size]="14" class="text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"></app-icon>
+                <p class="text-xs text-blue-700 dark:text-blue-300">
+                  Cloudflare R2 only (all file types)
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -317,27 +413,92 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
         }
 
         <!-- Save Button -->
-        <div class="flex gap-3">
+        <div class="sticky bottom-6 z-20">
           <button 
             (click)="saveConfiguration()"
             [disabled]="isSaving()"
-            class="flex-1 px-6 py-3 rounded-xl font-bold bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95">
+            class="w-full px-6 py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-2xl shadow-indigo-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] hover:shadow-indigo-500/40 hover:-translate-y-0.5">
             @if (isSaving()) {
-              <span class="flex items-center justify-center gap-2">
-                <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                Saving...
+              <span class="flex items-center justify-center gap-3">
+                <div class="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <span class="text-lg">Saving Changes...</span>
               </span>
             } @else {
-              Save Configuration
+              <span class="flex items-center justify-center gap-2">
+                <app-icon name="check" [size]="20"></app-icon>
+                <span class="text-lg">Save Configuration</span>
+              </span>
             }
           </button>
         </div>
 
-        <!-- Other Settings Sections (Future) -->
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
-          <div class="flex items-center gap-3 text-slate-400">
-            <app-icon name="settings" [size]="24"></app-icon>
-            <p class="text-sm">More settings coming soon...</p>
+                </div>
+              }
+              
+              @case ('appearance') {
+                <div class="animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Appearance</h2>
+                    <p class="text-slate-600 dark:text-slate-400">Customize the look and feel of your app</p>
+                  </div>
+                  <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center shadow-sm">
+                    <div class="inline-flex p-4 bg-gradient-to-br from-pink-500/10 to-purple-500/10 rounded-2xl mb-4">
+                      <app-icon name="palette" [size]="48" class="text-pink-500"></app-icon>
+                    </div>
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Coming Soon</h3>
+                    <p class="text-slate-600 dark:text-slate-400">Theme customization and appearance settings</p>
+                  </div>
+                </div>
+              }
+              
+              @case ('notifications') {
+                <div class="animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Notifications</h2>
+                    <p class="text-slate-600 dark:text-slate-400">Manage how you receive notifications</p>
+                  </div>
+                  <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center shadow-sm">
+                    <div class="inline-flex p-4 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 rounded-2xl mb-4">
+                      <app-icon name="bell" [size]="48" class="text-blue-500"></app-icon>
+                    </div>
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Coming Soon</h3>
+                    <p class="text-slate-600 dark:text-slate-400">Notification preferences and controls</p>
+                  </div>
+                </div>
+              }
+              
+              @case ('privacy') {
+                <div class="animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Privacy & Security</h2>
+                    <p class="text-slate-600 dark:text-slate-400">Control your privacy and security settings</p>
+                  </div>
+                  <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center shadow-sm">
+                    <div class="inline-flex p-4 bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-2xl mb-4">
+                      <app-icon name="shield" [size]="48" class="text-green-500"></app-icon>
+                    </div>
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Coming Soon</h3>
+                    <p class="text-slate-600 dark:text-slate-400">Privacy controls and security options</p>
+                  </div>
+                </div>
+              }
+              
+              @case ('account') {
+                <div class="animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Account</h2>
+                    <p class="text-slate-600 dark:text-slate-400">Manage your account information</p>
+                  </div>
+                  <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center shadow-sm">
+                    <div class="inline-flex p-4 bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-2xl mb-4">
+                      <app-icon name="user" [size]="48" class="text-orange-500"></app-icon>
+                    </div>
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Coming Soon</h3>
+                    <p class="text-slate-600 dark:text-slate-400">Account settings and preferences</p>
+                  </div>
+                </div>
+              }
+            }
           </div>
         </div>
       </div>
@@ -368,6 +529,41 @@ export class SettingsComponent implements OnInit {
   private router = inject(Router);
   private imageUploadService = inject(ImageUploadService);
   
+  activeSection = signal<string>('upload');
+  
+  settingsSections = [
+    {
+      id: 'upload',
+      icon: 'cloud-upload',
+      title: 'Upload Providers',
+      description: 'Configure file upload services'
+    },
+    {
+      id: 'appearance',
+      icon: 'palette',
+      title: 'Appearance',
+      description: 'Theme and display preferences'
+    },
+    {
+      id: 'notifications',
+      icon: 'bell',
+      title: 'Notifications',
+      description: 'Manage notification settings'
+    },
+    {
+      id: 'privacy',
+      icon: 'shield',
+      title: 'Privacy & Security',
+      description: 'Control your privacy settings'
+    },
+    {
+      id: 'account',
+      icon: 'user',
+      title: 'Account',
+      description: 'Manage your account settings'
+    }
+  ];
+  
   photoProvider: ImageProvider = 'imgbb';
   videoProvider: ImageProvider = 'imgbb';
   otherProvider: ImageProvider = 'imgbb';
@@ -381,23 +577,40 @@ export class SettingsComponent implements OnInit {
   successMessage = signal('');
   errorMessage = signal<string | null>(null);
 
-  providers = [
+  // All providers with their capabilities
+  allProviders = [
     {
       id: 'imgbb' as ImageProvider,
       name: 'ImgBB',
-      description: 'Free unlimited image hosting (Default)'
+      description: 'Free unlimited image hosting (Default)',
+      supports: ['photo'] as FileType[]
     },
     {
       id: 'cloudinary' as ImageProvider,
       name: 'Cloudinary',
-      description: 'Professional image hosting with optimization'
+      description: 'Professional media hosting with optimization',
+      supports: ['photo', 'video'] as FileType[]
     },
     {
       id: 'cloudflare-r2' as ImageProvider,
       name: 'Cloudflare R2',
-      description: 'S3-compatible object storage'
+      description: 'S3-compatible object storage (all file types)',
+      supports: ['photo', 'video', 'other'] as FileType[]
     }
   ];
+
+  // Filtered providers for each file type
+  get photoProviders() {
+    return this.allProviders.filter(p => p.supports.includes('photo'));
+  }
+
+  get videoProviders() {
+    return this.allProviders.filter(p => p.supports.includes('video'));
+  }
+
+  get otherProviders() {
+    return this.allProviders.filter(p => p.supports.includes('other'));
+  }
 
   imgbbConfig = {
     apiKey: ''
@@ -422,9 +635,11 @@ export class SettingsComponent implements OnInit {
 
   loadConfiguration() {
     const providers = this.imageUploadService.getProviders();
-    this.photoProvider = providers.photo;
-    this.videoProvider = providers.video;
-    this.otherProvider = providers.other;
+    
+    // Validate and set providers based on capabilities
+    this.photoProvider = this.isValidProvider(providers.photo, 'photo') ? providers.photo : 'imgbb';
+    this.videoProvider = this.isValidProvider(providers.video, 'video') ? providers.video : 'cloudinary';
+    this.otherProvider = this.isValidProvider(providers.other, 'other') ? providers.other : 'cloudflare-r2';
     
     const config = this.imageUploadService.getConfig();
 
@@ -444,6 +659,11 @@ export class SettingsComponent implements OnInit {
       this.cloudflareConfig.bucketName = config.cloudflareR2.bucketName;
       this.cloudflareConfig.publicUrl = config.cloudflareR2.publicUrl;
     }
+  }
+
+  isValidProvider(provider: ImageProvider, fileType: FileType): boolean {
+    const providerInfo = this.allProviders.find(p => p.id === provider);
+    return providerInfo ? providerInfo.supports.includes(fileType) : false;
   }
 
   onProviderChange() {
