@@ -1,12 +1,14 @@
-const CACHE_NAME = 'synapse-v1';
-const RUNTIME_CACHE = 'synapse-runtime';
+const CACHE_VERSION = '1.0.0';
+const CACHE_NAME = `synapse-v${CACHE_VERSION}`;
+const RUNTIME_CACHE = `synapse-runtime-v${CACHE_VERSION}`;
+const IMAGE_CACHE = `synapse-images-v${CACHE_VERSION}`;
 
 // Core assets to cache on install
 const CORE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  'https://cdn.tailwindcss.com'
+  '/offline.html'
 ];
 
 // Install event - cache core assets
@@ -24,14 +26,18 @@ self.addEventListener('activate', (event) => {
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames
-          .filter(name => name !== CACHE_NAME && name !== RUNTIME_CACHE)
+          .filter(name => 
+            name !== CACHE_NAME && 
+            name !== RUNTIME_CACHE && 
+            name !== IMAGE_CACHE
+          )
           .map(name => caches.delete(name))
       );
     }).then(() => self.clients.claim())
   );
 });
 
-// Fetch event - cache-first strategy with network fallback
+// Fetch event - smart caching strategies
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -39,34 +45,85 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (request.method !== 'GET') return;
 
-  // Skip Supabase API calls (always fetch fresh)
-  if (url.hostname.includes('supabase.co')) {
-    return event.respondWith(fetch(request));
+  // Skip Supabase/Firebase API calls (always fetch fresh)
+  if (url.hostname.includes('supabase.co') || 
+      url.hostname.includes('firebase') ||
+      url.hostname.includes('firebaseio')) {
+    return event.respondWith(
+      fetch(request).catch(() => {
+        // Return cached data if available when offline
+        return caches.match(request);
+      })
+    );
   }
 
-  // Cache-first strategy for assets
+  // Network-first for HTML pages
+  if (request.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          const responseToCache = response.clone();
+          caches.open(RUNTIME_CACHE).then(cache => {
+            cache.put(request, responseToCache);
+          });
+          return response;
+        })
+        .catch(() => {
+          return caches.match(request).then(cached => {
+            return cached || caches.match('/offline.html');
+          });
+        })
+    );
+    return;
+  }
+
+  // Cache-first for images
+  if (request.destination === 'image') {
+    event.respondWith(
+      caches.match(request).then(cached => {
+        if (cached) return cached;
+
+        return fetch(request).then(response => {
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(IMAGE_CACHE).then(cache => {
+              cache.put(request, responseToCache);
+            });
+          }
+          return response;
+        });
+      })
+    );
+    return;
+  }
+
+  // Cache-first for other assets (JS, CSS, fonts)
   event.respondWith(
     caches.match(request).then(cachedResponse => {
       if (cachedResponse) {
+        // Update cache in background
+        fetch(request).then(response => {
+          if (response && response.status === 200) {
+            caches.open(RUNTIME_CACHE).then(cache => {
+              cache.put(request, response);
+            });
+          }
+        }).catch(() => {});
         return cachedResponse;
       }
 
       return fetch(request).then(response => {
-        // Don't cache non-successful responses
         if (!response || response.status !== 200 || response.type === 'error') {
           return response;
         }
 
-        // Clone the response
         const responseToCache = response.clone();
-
         caches.open(RUNTIME_CACHE).then(cache => {
           cache.put(request, responseToCache);
         });
 
         return response;
       }).catch(() => {
-        // Return offline page if available
         return caches.match('/offline.html');
       });
     })
@@ -92,7 +149,7 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'Synapse';
   const options = {
     body: data.body || 'You have a new notification',
-    icon: '/icons/icon-192x192.png',
+    icon: '/icons/icon-192x192.svg',
     badge: '/icons/icon-72x72.png',
     data: data.url || '/',
     actions: [

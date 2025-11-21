@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Generate PWA Icons</title>
+  <style>
+    body {
+      font-family: system-ui;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 { color: #333; margin-bottom: 20px; }
+    button {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    button:hover { background: #4338ca; }
+    .icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; }
+    .icon-item {
+      text-align: center;
+      padding: 15px;
+      background: #f9fafb;
+      border-radius: 8px;
+    }
+    canvas { border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .size { font-size: 12px; color: #666; margin-top: 8px; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 Synapse PWA Icon Generator</h1>
+    <p style="color: #666; margin-bottom: 20px;">
+      Click the button below to generate all required PWA icons. Right-click each icon to save it to the <code>public/icons/</code> folder.
+    </p>
+    <button onclick="generateIcons()">Generate Icons</button>
+    <div class="icons" id="icons"></div>
+  </div>
+
+  <script>
+    const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+
+    function generateIcons() {
+      const container = document.getElementById('icons');
+      container.innerHTML = '';
+
+      sizes.forEach(size => {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        // Gradient background
+        const gradient = ctx.createLinearGradient(0, 0, size, size);
+        gradient.addColorStop(0, '#4f46e5');
+        gradient.addColorStop(1, '#7c3aed');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, size, size);
+
+        // Draw "S" letter
+        ctx.fillStyle = 'white';
+        ctx.font = `bold ${size * 0.6}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('S', size / 2, size / 2);
+
+        // Create download link
+        const link = document.createElement('a');
+        link.download = `icon-${size}x${size}.png`;
+        link.href = canvas.toDataURL();
+        
+        const item = document.createElement('div');
+        item.className = 'icon-item';
+        item.appendChild(canvas);
+        
+        const sizeLabel = document.createElement('div');
+        sizeLabel.className = 'size';
+        sizeLabel.textContent = `${size}x${size}`;
+        item.appendChild(sizeLabel);
+        
+        item.onclick = () => link.click();
+        item.style.cursor = 'pointer';
+        
+        container.appendChild(item);
+      });
+    }
+
+    // Auto-generate on load
+    window.onload = generateIcons;
+  </script>
+</body>
+</html>
