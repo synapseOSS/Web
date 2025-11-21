@@ -31,8 +31,11 @@ export class ThemeService {
   toggle(event?: MouseEvent) {
     if (this.isTransitioning) return;
     
-    // If View Transitions API is supported, use it with custom animation
-    if (typeof document !== 'undefined' && 'startViewTransition' in document) {
+    // Check if View Transitions API is supported
+    const supportsViewTransitions = typeof document !== 'undefined' && 
+                                    'startViewTransition' in document;
+    
+    if (supportsViewTransitions) {
       this.isTransitioning = true;
       
       // Get click position for ripple effect
@@ -48,26 +51,36 @@ export class ThemeService {
       // Create clipPath for ripple animation
       const isDark = !this.darkMode();
       
-      (document as any).startViewTransition(() => {
-        this.darkMode.update(d => !d);
-      }).ready.then(() => {
-        // Animate the ripple effect
-        document.documentElement.animate(
-          {
-            clipPath: [
-              `circle(0px at ${x}px ${y}px)`,
-              `circle(${endRadius}px at ${x}px ${y}px)`
-            ]
-          },
-          {
-            duration: 800,
-            easing: 'ease-in-out',
-            pseudoElement: isDark ? '::view-transition-new(root)' : '::view-transition-old(root)'
-          }
-        ).finished.finally(() => {
+      try {
+        const transition = (document as any).startViewTransition(() => {
+          this.darkMode.update(d => !d);
+        });
+
+        transition.ready.then(() => {
+          // Animate the ripple effect
+          document.documentElement.animate(
+            {
+              clipPath: [
+                `circle(0px at ${x}px ${y}px)`,
+                `circle(${endRadius}px at ${x}px ${y}px)`
+              ]
+            },
+            {
+              duration: 800,
+              easing: 'ease-in-out',
+              pseudoElement: isDark ? '::view-transition-new(root)' : '::view-transition-old(root)'
+            }
+          ).finished.finally(() => {
+            this.isTransitioning = false;
+          });
+        }).catch(() => {
           this.isTransitioning = false;
         });
-      });
+      } catch (error) {
+        // If View Transitions fail, just toggle normally
+        this.darkMode.update(d => !d);
+        this.isTransitioning = false;
+      }
     } else {
       // Fallback for browsers without View Transitions API
       this.createFallbackTransition(event);
@@ -76,42 +89,54 @@ export class ThemeService {
 
   private createFallbackTransition(event?: MouseEvent) {
     this.isTransitioning = true;
-    const x = event?.clientX ?? window.innerWidth / 2;
-    const y = event?.clientY ?? window.innerHeight / 2;
     
-    // Create overlay element for ripple effect
-    const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 9999;
-      background: ${this.darkMode() ? '#ffffff' : '#0f172a'};
-      clip-path: circle(0px at ${x}px ${y}px);
-      transition: clip-path 0.8s ease-in-out;
-    `;
-    
-    document.body.appendChild(overlay);
-    
-    // Trigger animation
-    requestAnimationFrame(() => {
-      const endRadius = Math.hypot(
-        Math.max(x, window.innerWidth - x),
-        Math.max(y, window.innerHeight - y)
-      );
-      overlay.style.clipPath = `circle(${endRadius}px at ${x}px ${y}px)`;
-    });
-    
-    // Toggle theme and cleanup
-    setTimeout(() => {
-      this.darkMode.update(d => !d);
+    try {
+      const x = event?.clientX ?? window.innerWidth / 2;
+      const y = event?.clientY ?? window.innerHeight / 2;
+      
+      // Create overlay element for ripple effect
+      const overlay = document.createElement('div');
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 9999;
+        background: ${this.darkMode() ? '#ffffff' : '#0f172a'};
+        clip-path: circle(0px at ${x}px ${y}px);
+        transition: clip-path 0.8s ease-in-out;
+      `;
+      
+      document.body.appendChild(overlay);
+      
+      // Trigger animation
+      requestAnimationFrame(() => {
+        const endRadius = Math.hypot(
+          Math.max(x, window.innerWidth - x),
+          Math.max(y, window.innerHeight - y)
+        );
+        overlay.style.clipPath = `circle(${endRadius}px at ${x}px ${y}px)`;
+      });
+      
+      // Toggle theme and cleanup
       setTimeout(() => {
-        overlay.remove();
-        this.isTransitioning = false;
-      }, 100);
-    }, 400);
+        this.darkMode.update(d => !d);
+        setTimeout(() => {
+          overlay.remove();
+          this.isTransitioning = false;
+        }, 100);
+      }, 400);
+    } catch (error) {
+      // If animation fails, just toggle immediately
+      this.darkMode.update(d => !d);
+      this.isTransitioning = false;
+    }
+  }
+
+  // Simple toggle without animation (backup method)
+  toggleImmediate() {
+    this.darkMode.update(d => !d);
   }
 }
