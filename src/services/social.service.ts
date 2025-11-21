@@ -1,5 +1,7 @@
 
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
+import { SupabaseService } from './supabase.service';
+import { AuthService } from './auth.service';
 
 export interface User {
   id: string;
@@ -26,7 +28,7 @@ export interface Story {
 export interface MediaItem {
   type: 'IMAGE' | 'VIDEO';
   url: string;
-  thumbnail?: string; // For videos
+  thumbnail?: string;
 }
 
 export interface Post {
@@ -34,11 +36,11 @@ export interface Post {
   author_uid: string;
   user: User;
   post_text: string;
-  media: MediaItem[]; // Changed from single post_image to array
+  media: MediaItem[];
   likes_count: number;
   comments_count: number;
   views_count: number;
-  created_at: string; // ISO date
+  created_at: string;
   is_liked?: boolean;
   is_bookmarked?: boolean;
   post_type?: 'TEXT' | 'IMAGE' | 'VIDEO';
@@ -66,6 +68,8 @@ export interface Message {
   providedIn: 'root'
 })
 export class SocialService {
+  private supabase = inject(SupabaseService).client;
+  private auth = inject(AuthService);
   
   // Mock Current User
   currentUser = signal<User>({
@@ -216,6 +220,212 @@ export class SocialService {
     { id: 'm3', chat_id: 'chat_1', sender_id: 'u2', content: 'Awesome! Did you see the new PR?', created_at: '10:06 AM', is_me: false }
   ]);
 
+  // Real-time subscriptions
+  private setupRealtimeSubscriptions() {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return;
+
+    // Subscribe to new posts
+    this.supabase
+      .channel('posts')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts' }, 
+        () => this.fetchPosts())
+      .subscribe();
+
+    // Subscribe to likes
+    this.supabase
+      .channel('likes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'likes' }, 
+        () => this.fetchPosts())
+      .subscribe();
+  }
+
+  async fetchPosts() {
+    try {
+      const { data, error } = await this.supabase
+        .from('posts')
+        .select(`
+          *,
+          users:author_uid (
+            uid,
+            username,
+            display_name,
+            avatar,
+            verify,
+            followers_count,
+            following_count
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      const userId = this.auth.currentUser()?.id;
+      const postsWithLikes = await Promise.all(
+        (data || []).map(async (post: any) => {
+          const isLiked = userId ? await this.checkIfLiked(post.id, userId) : false;
+          return {
+            id: post.id,
+            author_uid: post.author_uid,
+            user: post.users,
+            post_text: post.post_text || '',
+            media: post.media_items || [],
+            likes_count: post.likes_count || 0,
+            comments_count: post.comments_count || 0,
+            views_count: post.views_count || 0,
+            created_at: post.created_at,
+            is_liked: isLiked,
+            post_type: post.post_type || 'TEXT'
+          };
+        })
+      );
+
+      this.posts.set(postsWithLikes);
+    } catch (err) {
+      console.error('Error fetching posts:', err);
+    }
+  }
+
+  async checkIfLiked(postId: string, userId: string): Promise<boolean> {
+    const { data } = await this.supabase
+      .from('likes')
+      .select('id')
+      .eq('target_id', postId)
+      .eq('user_id', userId)
+      .eq('target_type', 'post')
+      .single();
+    return !!data;
+  }
+
+  async likePost(postId: string) {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return;
+
+    const { error } = await this.supabase
+      .from('likes')
+      .insert({ user_id: userId, target_id: postId, target_type: 'post' });
+
+    if (!error) {
+      await this.supabase.rpc('increment_likes_count', { post_id: postId });
+      await this.fetchPosts();
+    }
+  }
+
+  async unlikePost(postId: string) {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return;
+
+    const { error } = await this.supabase
+      .from('likes')
+      .delete()
+      .eq('target_id', postId)
+      .eq('user_id', userId)
+      .eq('target_type', 'post');
+
+    if (!error) {
+      await this.supabase.rpc('decrement_likes_count', { post_id: postId });
+      await this.fetchPosts();
+    }
+  }
+
+  async followUser(userId: string) {
+    const currentUserId = this.auth.currentUser()?.id;
+    if (!currentUserId) return;
+
+    const { error } = await this.supabase
+      .from('follows')
+      .insert({ follower_id: currentUserId, following_id: userId });
+
+    if (!error) {
+      await this.fetchSuggestedUsers();
+    }
+  }
+
+  async unfollowUser(userId: string) {
+    const currentUserId = this.auth.currentUser()?.id;
+    if (!currentUserId) return;
+
+    const { error } = await this.supabase
+      .from('follows')
+      .delete()
+      .eq('follower_id', currentUserId)
+      .eq('following_id', userId);
+
+    if (!error) {
+      await this.fetchSuggestedUsers();
+    }
+  }
+
+  async fetchSuggestedUsers() {
+    try {
+      const { data, error } = await this.supabase
+        .from('users')
+        .select('*')
+        .limit(10);
+
+      if (error) throw error;
+      this.suggestedUsers.set(data || []);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+    }
+  }
+
+  async fetchStories() {
+    try {
+      const { data, error } = await this.supabase
+        .from('stories')
+        .select(`
+          *,
+          users:user_id (
+            uid,
+            username,
+            display_name,
+            avatar,
+            verify
+          )
+        `)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      this.stories.set(data?.map((s: any) => ({
+        id: s.id,
+        user_id: s.user_id,
+        user: s.users,
+        media_url: s.media_url,
+        is_viewed: false
+      })) || []);
+    } catch (err) {
+      console.error('Error fetching stories:', err);
+    }
+  }
+
+  async fetchChats() {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return;
+
+    try {
+      const { data, error } = await this.supabase
+        .from('chat_participants')
+        .select(`
+          chat_id,
+          chats:chat_id (
+            id,
+            chat_id,
+            last_message,
+            last_message_time
+          )
+        `)
+        .eq('user_id', userId);
+
+      if (error) throw error;
+      // Transform and set chats
+    } catch (err) {
+      console.error('Error fetching chats:', err);
+    }
+  }
+
   getPosts() {
     return this.posts();
   }
@@ -234,5 +444,12 @@ export class SocialService {
 
   addPost(post: Post) {
     this.posts.update(current => [post, ...current]);
+  }
+
+  constructor() {
+    this.setupRealtimeSubscriptions();
+    this.fetchPosts();
+    this.fetchStories();
+    this.fetchSuggestedUsers();
   }
 }
