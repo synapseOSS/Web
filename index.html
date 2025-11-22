@@ -3,7 +3,7 @@
 <html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   
   <!-- Primary Meta Tags -->
   <title>Synapse | The Neural Network of Social</title>
@@ -126,6 +126,23 @@
       background-color: #f8fafc;
       color: #0f172a;
       overflow-x: hidden;
+      /* Disable text selection, press-and-hold, and zoom */
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: pan-x pan-y;
+    }
+    
+    /* Allow text selection in input fields and textareas */
+    input, textarea, [contenteditable="true"] {
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
+      user-select: text;
+      -webkit-touch-callout: default;
     }
     :root.dark body {
       background-color: #020617;

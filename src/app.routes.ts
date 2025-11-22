@@ -21,6 +21,9 @@ import { PostDetailComponent } from './pages/post-detail.component';
 import { FollowersComponent } from './pages/followers.component';
 import { AboutComponent } from './pages/about.component';
 import { authGuard } from './guards/auth.guard';
+import { BookmarksComponent } from './pages/bookmarks.component';
+import { ExploreComponent } from './pages/explore.component';
+import { NotificationsComponent } from './pages/notifications.component';
 
 export const routes: Routes = [
   // Settings Page (Standalone, No Layout)
@@ -44,7 +47,10 @@ export const routes: Routes = [
       { path: 'profile/:username/:type', component: FollowersComponent },
       { path: 'edit-profile', component: EditProfileComponent },
       { path: 'compose', component: ComposeComponent },
-      { path: 'post/:id', component: PostDetailComponent }
+      { path: 'post/:id', component: PostDetailComponent },
+      { path: 'bookmarks', component: BookmarksComponent },
+      { path: 'explore', component: ExploreComponent },
+      { path: 'notifications', component: NotificationsComponent }
     ]
   },
 

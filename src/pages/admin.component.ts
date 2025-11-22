@@ -12,15 +12,15 @@ import { IconComponent } from '../components/icon.component';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, IconComponent],
   template: `
-    <div class="min-h-screen pt-32 pb-20 relative">
+    <div class="min-h-screen pt-20 pb-20 relative">
        <div class="absolute inset-0 -z-10">
           <div class="absolute inset-0 bg-grid opacity-10"></div>
        </div>
 
-      <div class="container mx-auto px-6 max-w-4xl">
-        <div class="flex items-center justify-between mb-8">
-          <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Admin Dashboard</h1>
-          <button (click)="logout()" class="px-4 py-2 text-sm rounded-lg border transition-colors
+      <div class="container mx-auto px-4 sm:px-6 max-w-4xl">
+        <div class="flex items-center justify-between mb-8 gap-4">
+          <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">Admin Dashboard</h1>
+          <button (click)="logout()" class="px-4 py-2 text-sm rounded-lg border transition-colors flex-shrink-0 touch-manipulation
                   bg-white text-slate-600 border-slate-200 hover:bg-slate-50
                   dark:bg-slate-800 dark:text-slate-300 dark:border-white/10 dark:hover:bg-slate-700 dark:hover:text-white">
             Sign Out
@@ -30,21 +30,21 @@ import { IconComponent } from '../components/icon.component';
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <!-- Sidebar Info -->
           <div class="lg:col-span-1 space-y-6">
-             <div class="p-6 rounded-2xl border
+             <div class="p-4 sm:p-6 rounded-2xl border
                          bg-white border-slate-200
                          dark:bg-slate-900/50 dark:border-white/10">
                <div class="flex items-center gap-3 mb-4">
-                 <div class="w-10 h-10 rounded-full flex items-center justify-center
+                 <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
                              bg-indigo-50 text-indigo-600
                              dark:bg-indigo-500/20 dark:text-indigo-400">
                     <app-icon name="users" [size]="20"></app-icon>
                  </div>
-                 <div>
+                 <div class="min-w-0 flex-1">
                    <div class="text-sm text-slate-500 dark:text-slate-400">Logged in as</div>
-                   <div class="font-medium truncate max-w-[150px] text-slate-900 dark:text-white">{{ authService.currentUser()?.email }}</div>
+                   <div class="font-medium truncate text-slate-900 dark:text-white">{{ authService.currentUser()?.email }}</div>
                  </div>
                </div>
-               <div class="text-xs text-slate-500">
+               <div class="text-xs text-slate-500 dark:text-slate-400">
                  Use this panel to push updates to the changelog. Changes are live immediately.
                </div>
              </div>
@@ -52,10 +52,10 @@ import { IconComponent } from '../components/icon.component';
 
           <!-- Main Form -->
           <div class="lg:col-span-2">
-            <div class="p-8 rounded-2xl border backdrop-blur-xl
+            <div class="p-4 sm:p-6 lg:p-8 rounded-2xl border backdrop-blur-xl
                         bg-white/80 border-slate-200
                         dark:bg-slate-900/80 dark:border-white/10">
-              <h2 class="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
+              <h2 class="text-lg sm:text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
                 <app-icon name="sparkles" class="text-yellow-500 dark:text-yellow-400" [size]="20"></app-icon>
                 Add Changelog Entry
               </h2>
@@ -85,7 +85,7 @@ import { IconComponent } from '../components/icon.component';
                        <button 
                          type="button"
                          (click)="setPlatform(p)"
-                         class="px-3 py-1.5 rounded-lg text-sm border transition-all"
+                         class="px-3 py-1.5 rounded-lg text-sm border transition-all touch-manipulation active:scale-95"
                          [class]="form.get('platform')?.value === p 
                            ? 'bg-indigo-600 text-white border-indigo-500' 
                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-white hover:border-indigo-300 dark:bg-slate-950 dark:text-slate-400 dark:border-white/10 dark:hover:border-indigo-500/50'">
@@ -111,14 +111,14 @@ import { IconComponent } from '../components/icon.component';
                                class="flex-grow px-4 py-2 border rounded-lg focus:border-indigo-500 focus:outline-none
                                       bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400
                                       dark:bg-slate-950 dark:border-white/10 dark:text-white dark:placeholder-slate-600">
-                        <button type="button" (click)="removeChange($index)" class="p-2 text-slate-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 transition-colors">
+                        <button type="button" (click)="removeChange($index)" class="p-2 text-slate-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 transition-colors touch-manipulation flex-shrink-0">
                           <app-icon name="x" [size]="18"></app-icon>
                         </button>
                       </div>
                     }
                   </div>
-                  <button type="button" (click)="addChange()" class="mt-3 text-sm font-medium flex items-center gap-1 text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
-                    <app-icon name="users" [size]="14"></app-icon> Add another change
+                  <button type="button" (click)="addChange()" class="mt-3 text-sm font-medium flex items-center gap-1 text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 touch-manipulation">
+                    <app-icon name="plus" [size]="14"></app-icon> Add another change
                   </button>
                 </div>
 
@@ -126,8 +126,8 @@ import { IconComponent } from '../components/icon.component';
                    <button 
                      type="submit" 
                      [disabled]="form.invalid || submitting()"
-                     class="px-6 py-3 font-bold rounded-lg disabled:opacity-50 transition-all
-                            bg-slate-900 text-white hover:bg-slate-800
+                     class="px-6 py-3 font-bold rounded-lg disabled:opacity-50 transition-all touch-manipulation
+                            bg-slate-900 text-white hover:bg-slate-800 active:scale-95
                             dark:bg-white dark:text-slate-950 dark:hover:bg-indigo-50">
                      {{ submitting() ? 'Publishing...' : 'Publish Update' }}
                    </button>

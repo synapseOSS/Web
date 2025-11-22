@@ -1,0 +1,72 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "@supabase/mcp-server-supabase"
+      ],
+      "env": {
+        "SUPABASE_URL": "https://apqvyyphlrtmuyjnzmuq.supabase.co",
+        "SUPABASE_ACCESS_TOKEN": "sbp_3151110037cef4d5d58d56e48bd7e565705ef243"
+      },
+      "disabled": false,
+      "autoApprove": [
+        "*",
+        "search_docs",
+        "list_projects",
+        "get_project",
+        "list_tables",
+        "execute_sql",
+        "apply_migration",
+        "get_logs",
+        "get_advisors",
+        "list_organizations",
+        "get_organization",
+        "get_cost",
+        "confirm_cost",
+        "create_project",
+        "pause_project",
+        "restore_project",
+        "list_extensions",
+        "list_migrations",
+        "get_project_url",
+        "get_anon_key",
+        "generate_typescript_types",
+        "list_edge_functions",
+        "get_edge_function",
+        "deploy_edge_function",
+        "create_branch",
+        "list_branches",
+        "delete_branch",
+        "merge_branch",
+        "reset_branch",
+        "rebase_branch"
+      ]
+    },
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "env": {
+        "CONTEXT7_API_KEY": "94eb9030-9b06-491b-9821-82d40ebc7427"
+      },
+      "disabled": false,
+      "autoApprove": [
+        "resolve-library-id",
+        "get-library-docs"
+      ],
+      "disabledTools": []
+    },
+    "hugeicons": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@hugeicons/mcp-server"
+      ],
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}

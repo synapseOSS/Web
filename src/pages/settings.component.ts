@@ -17,6 +17,13 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
+    
+    /* Fix mobile responsiveness */
+    @media (max-width: 1024px) {
+      .settings-grid {
+        display: block !important;
+      }
+    }
   `],
   template: `
     <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
@@ -24,7 +31,7 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
       <div class="sticky top-0 z-30 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 border-b border-slate-200/50 dark:border-slate-800/50 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div class="flex items-center gap-4">
-            <button (click)="goBack()" class="p-2.5 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all hover:scale-105 active:scale-95">
+            <button (click)="goBack()" class="p-2.5 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all hover:scale-105 active:scale-95 touch-manipulation">
               <app-icon name="arrow-left" [size]="22" class="text-slate-700 dark:text-slate-300"></app-icon>
             </button>
             <div class="flex-1">
@@ -38,12 +45,12 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
       </div>
 
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24">
-        <div class="grid lg:grid-cols-[280px_1fr] gap-6">
+        <div class="settings-grid grid lg:grid-cols-[280px_1fr] gap-6">
           <!-- Settings Navigation Sidebar -->
           <div class="lg:sticky lg:top-24 h-fit">
             <!-- Mobile: Horizontal Scrollable Navigation -->
-            <div class="lg:hidden mb-6 -mx-4 px-4">
-              <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <div class="lg:hidden mb-6 -mx-4 px-4 overflow-x-auto">
+              <div class="flex gap-2 pb-2 scrollbar-hide" style="min-width: min-content;">
                 @for (section of settingsSections; track section.id) {
                   <button
                     (click)="activeSection.set(section.id)"
@@ -58,7 +65,7 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
                     [class.border]="activeSection() !== section.id"
                     [class.border-slate-200]="activeSection() !== section.id"
                     [class.dark:border-slate-800]="activeSection() !== section.id"
-                    class="flex-shrink-0 px-4 py-2.5 flex items-center gap-2 rounded-xl transition-all whitespace-nowrap">
+                    class="flex-shrink-0 px-4 py-2.5 flex items-center gap-2 rounded-xl transition-all whitespace-nowrap touch-manipulation active:scale-95">
                     <app-icon 
                       [name]="section.icon" 
                       [size]="18" 
@@ -90,7 +97,7 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
                     [class.text-white]="activeSection() === section.id"
                     [class.shadow-lg]="activeSection() === section.id"
                     [class.shadow-indigo-500/30]="activeSection() === section.id"
-                    class="w-full px-4 py-3 mb-1 flex items-center gap-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group relative overflow-hidden">
+                    class="w-full px-4 py-3 mb-1 flex items-center gap-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group relative overflow-hidden touch-manipulation active:scale-95">
                     @if (activeSection() === section.id) {
                       <div class="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 animate-pulse"></div>
                     }
@@ -245,7 +252,7 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
                   <button 
                     (click)="toggleSecret('imgbb')"
                     type="button"
-                    class="absolute right-2 top-1/2 -translate-y-1/2 p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-colors">
+                    class="absolute right-2 top-1/2 -translate-y-1/2 p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-colors touch-manipulation">
                     <app-icon [name]="showSecrets.imgbb() ? 'eye-off' : 'eye'" [size]="18" class="text-slate-500"></app-icon>
                   </button>
                 </div>
@@ -325,7 +332,7 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
                 @if (hasCustomConfig('cloudinary')) {
                   <button 
                     (click)="clearCloudinaryConfig()"
-                    class="w-full px-4 py-2.5 rounded-lg font-semibold border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    class="w-full px-4 py-2.5 rounded-lg font-semibold border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors touch-manipulation active:scale-95">
                     Reset to Default
                   </button>
                 }
@@ -390,7 +397,7 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
                     <button 
                       (click)="toggleSecret('cloudflare')"
                       type="button"
-                      class="absolute right-2 top-1/2 -translate-y-1/2 p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-colors">
+                      class="absolute right-2 top-1/2 -translate-y-1/2 p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-colors touch-manipulation">
                       <app-icon [name]="showSecrets.cloudflare() ? 'eye-off' : 'eye'" [size]="18" class="text-slate-500"></app-icon>
                     </button>
                   </div>
@@ -450,11 +457,11 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
         }
 
         <!-- Save Button -->
-        <div class="sticky bottom-6 z-20">
+        <div class="sticky bottom-6 z-20 mt-8">
           <button 
             (click)="saveConfiguration()"
             [disabled]="isSaving()"
-            class="w-full px-6 py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-2xl shadow-indigo-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] hover:shadow-indigo-500/40 hover:-translate-y-0.5">
+            class="w-full px-6 py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-2xl shadow-indigo-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] hover:shadow-indigo-500/40 hover:-translate-y-0.5 touch-manipulation">
             @if (isSaving()) {
               <span class="flex items-center justify-center gap-3">
                 <div class="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
