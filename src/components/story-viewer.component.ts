@@ -5,6 +5,7 @@ import { IconComponent } from './icon.component';
 import { ReactionPickerComponent, ReactionType } from './reaction-picker.component';
 import { Story, StoryService } from '../services/story.service';
 import { InteractiveElementService } from '../services/interactive-element.service';
+import { AccessibilityService } from '../services/accessibility.service';
 
 interface StoryGroup {
   userId: string;
@@ -330,6 +331,7 @@ export class StoryViewerComponent implements OnDestroy {
   // Services
   private storyService = inject(StoryService);
   private interactiveService = inject(InteractiveElementService);
+  private a11yService = inject(AccessibilityService);
   
   // State
   isOpen = signal(true);

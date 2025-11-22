@@ -225,7 +225,7 @@ import { StoryAnalyticsService, StoryAnalytics, ViewerInfo } from '../services/s
         <div class="border-t border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between bg-gray-50 dark:bg-gray-800">
           <div class="text-sm text-gray-600 dark:text-gray-400">
             @if (analytics()) {
-              Last updated: {{ formatTimeAgo(new Date().toISOString()) }}
+              Last updated: {{ formatTimeAgo(currentTime()) }}
             }
           </div>
           <div class="flex items-center gap-2">
@@ -270,6 +270,7 @@ export class StoryInsightsComponent implements OnInit {
   error = signal<string | null>(null);
   exporting = signal(false);
   sortByRecent = signal(true);
+  currentTime = signal(new Date().toISOString());
 
   // Computed
   sortedViewers = computed(() => {
