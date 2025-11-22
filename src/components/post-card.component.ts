@@ -6,7 +6,7 @@ import { IconComponent } from './icon.component';
 import { ReactionPickerComponent, ReactionType } from './reaction-picker.component';
 import { ActionMenuComponent, MenuItem } from './action-menu.component';
 import { TextFormatterComponent } from './text-formatter.component';
-import { Post } from '../services/social.service';
+import { Post, SocialService } from '../services/social.service';
 import { TextParserService } from '../services/text-parser.service';
 import { AuthService } from '../services/auth.service';
 import { SupabaseService } from '../services/supabase.service';
@@ -281,19 +281,30 @@ export class PostCardComponent {
   private router = inject(Router);
   private textParser = inject(TextParserService);
   private authService = inject(AuthService);
+  private socialService = inject(SocialService);
   private supabase = inject(SupabaseService).client;
 
-  menuItems: MenuItem[] = [
-    { id: 'bookmark', label: 'Bookmark', icon: 'bookmark', show: true },
-    { id: 'copy', label: 'Copy link', icon: 'link', show: true },
-    { id: 'embed', label: 'Embed post', icon: 'code', show: true },
-    { id: 'mute', label: 'Mute conversation', icon: 'volume-x', show: true },
-    { id: 'report', label: 'Report post', icon: 'flag', danger: true, show: true },
-  ];
+  menuItems: MenuItem[] = [];
 
   ngOnInit() {
     this.currentReaction.set(this.post().is_liked ? 'LIKE' : null);
     this.likesCount.set(this.post().likes_count);
+    this.buildMenuItems();
+  }
+
+  buildMenuItems() {
+    const currentUser = this.authService.currentUser();
+    const isOwnPost = currentUser?.id === this.post().author_uid;
+
+    this.menuItems = [
+      { id: 'edit', label: 'Edit post', icon: 'edit', show: isOwnPost },
+      { id: 'delete', label: 'Delete post', icon: 'trash', danger: true, show: isOwnPost },
+      { id: 'bookmark', label: 'Bookmark', icon: 'bookmark', show: true },
+      { id: 'copy', label: 'Copy link', icon: 'link', show: true },
+      { id: 'embed', label: 'Embed post', icon: 'code', show: !isOwnPost },
+      { id: 'mute', label: 'Mute conversation', icon: 'volume-x', show: !isOwnPost },
+      { id: 'report', label: 'Report post', icon: 'flag', danger: true, show: !isOwnPost },
+    ];
   }
 
   getReactionEmoji(type: ReactionType | null): string {
@@ -374,8 +385,18 @@ export class PostCardComponent {
     }
   }
 
-  handleMenuAction(action: string) {
+  async handleMenuAction(action: string) {
     switch (action) {
+      case 'edit':
+        this.router.navigate(['/app/compose'], { 
+          queryParams: { edit: this.post().id } 
+        });
+        break;
+      case 'delete':
+        if (confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+          await this.deletePost();
+        }
+        break;
       case 'bookmark':
         console.log('Bookmark post');
         break;
@@ -393,6 +414,25 @@ export class PostCardComponent {
           console.log('Report post');
         }
         break;
+    }
+  }
+
+  async deletePost() {
+    try {
+      const { error } = await this.supabase
+        .from('posts')
+        .delete()
+        .eq('id', this.post().id);
+
+      if (error) throw error;
+
+      // Remove from local state
+      this.socialService.deletePost(this.post().id);
+      
+      alert('Post deleted successfully');
+    } catch (err) {
+      console.error('Error deleting post:', err);
+      alert('Failed to delete post. Please try again.');
     }
   }
 

@@ -250,6 +250,11 @@ export class MentionInputComponent implements AfterViewInit {
     this.text.set(value);
   }
 
+  setText(value: string) {
+    this.text.set(value);
+    this.textChanged.emit(value);
+  }
+
   clear() {
     this.text.set('');
     this.textChanged.emit('');

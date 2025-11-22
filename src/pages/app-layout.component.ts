@@ -1,5 +1,5 @@
 
-import { Component, inject, signal, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, inject, signal, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +7,7 @@ import { IconComponent } from '../components/icon.component';
 import { AuthService } from '../services/auth.service';
 import { SocialService } from '../services/social.service';
 import { SearchService, SearchResult } from '../services/search.service';
+import { ScrollService } from '../services/scroll.service';
 
 @Component({
   selector: 'app-layout',
@@ -85,6 +86,10 @@ import { SearchService, SearchResult } from '../services/search.service';
               <app-icon [name]="'bookmark'" [size]="26"></app-icon>
               <span class="hidden xl:block">Bookmarks</span>
             </a>
+            <a routerLink="/app/archive" routerLinkActive="font-bold text-indigo-600 dark:text-white bg-slate-100 dark:bg-white/10" class="flex items-center gap-4 p-3 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 transition-colors text-xl xl:pr-6 w-max xl:w-auto text-slate-700 dark:text-slate-300">
+              <app-icon [name]="'archive'" [size]="26"></app-icon>
+              <span class="hidden xl:block">Archive</span>
+            </a>
             <a routerLink="/app/profile" routerLinkActive="font-bold text-indigo-600 dark:text-white bg-slate-100 dark:bg-white/10" class="flex items-center gap-4 p-3 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 transition-colors text-xl xl:pr-6 w-max xl:w-auto text-slate-700 dark:text-slate-300">
               <app-icon [name]="'users'" [size]="26"></app-icon>
               <span class="hidden xl:block">Profile</span>
@@ -112,7 +117,17 @@ import { SearchService, SearchResult } from '../services/search.service';
         </nav>
 
         <!-- Main Content -->
-        <main class="w-full max-w-[600px] flex-shrink-0 min-h-screen pb-20 md:pb-0">
+        <main class="w-full max-w-[600px] flex-shrink-0 min-h-screen md:pt-0">
+          <!-- Mobile Top Nav -->
+          <div 
+            [class]="'md:hidden fixed left-0 right-0 bg-white/90 dark:bg-slate-950/90 backdrop-blur-lg border-b border-slate-200 dark:border-white/10 px-4 py-2 flex justify-between items-center z-40 transition-all duration-300 ' + (headerCollapsed() ? 'top-[40px]' : 'top-[52px]')">
+            <a routerLink="/app/feed" routerLinkActive="text-indigo-600 dark:text-indigo-400" class="p-2 text-slate-500 dark:text-slate-400"><app-icon name="globe" [size]="24"></app-icon></a>
+            <button (click)="toggleMobileSearch()" [class.text-indigo-600]="showMobileSearch()" [class.dark:text-indigo-400]="showMobileSearch()" class="p-2 text-slate-500 dark:text-slate-400 transition-colors"><app-icon name="search" [size]="24"></app-icon></button>
+            <a routerLink="/app/explore" routerLinkActive="text-indigo-600 dark:text-indigo-400" class="p-2 text-slate-500 dark:text-slate-400"><app-icon name="hash" [size]="24"></app-icon></a>
+            <a routerLink="/app/messages" routerLinkActive="text-indigo-600 dark:text-indigo-400" class="p-2 text-slate-500 dark:text-slate-400"><app-icon name="mail" [size]="24"></app-icon></a>
+            <a routerLink="/app/profile" routerLinkActive="text-indigo-600 dark:text-indigo-400" class="p-2 text-slate-500 dark:text-slate-400"><app-icon name="users" [size]="24"></app-icon></a>
+          </div>
+          
           <router-outlet></router-outlet>
         </main>
 
@@ -200,14 +215,7 @@ import { SearchService, SearchResult } from '../services/search.service';
           </nav>
         </aside>
 
-        <!-- Mobile Bottom Nav -->
-        <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-950/90 backdrop-blur-lg border-t border-slate-200 dark:border-white/10 px-4 py-3 flex justify-between items-center z-50">
-          <a routerLink="/app/feed" routerLinkActive="text-indigo-600 dark:text-indigo-400" class="p-2 text-slate-500 dark:text-slate-400"><app-icon name="globe" [size]="24"></app-icon></a>
-          <button (click)="toggleMobileSearch()" [class.text-indigo-600]="showMobileSearch()" [class.dark:text-indigo-400]="showMobileSearch()" class="p-2 text-slate-500 dark:text-slate-400 transition-colors"><app-icon name="search" [size]="24"></app-icon></button>
-          <a routerLink="/app/explore" routerLinkActive="text-indigo-600 dark:text-indigo-400" class="p-2 text-slate-500 dark:text-slate-400"><app-icon name="hash" [size]="24"></app-icon></a>
-          <a routerLink="/app/messages" routerLinkActive="text-indigo-600 dark:text-indigo-400" class="p-2 text-slate-500 dark:text-slate-400"><app-icon name="mail" [size]="24"></app-icon></a>
-          <a routerLink="/app/profile" routerLinkActive="text-indigo-600 dark:text-indigo-400" class="p-2 text-slate-500 dark:text-slate-400"><app-icon name="users" [size]="24"></app-icon></a>
-        </div>
+
 
         <!-- Mobile Search Overlay -->
         @if (showMobileSearch()) {
@@ -343,6 +351,7 @@ export class AppLayoutComponent implements OnInit {
   authService = inject(AuthService);
   socialService = inject(SocialService);
   searchService = inject(SearchService);
+  scrollService = inject(ScrollService);
   
   isLaunching = signal(true);
   progress = signal(0);
@@ -354,6 +363,8 @@ export class AppLayoutComponent implements OnInit {
   isSearching = signal(false);
   searchResults = signal<SearchResult[]>([]);
   recentSearches = signal<string[]>([]);
+  
+  headerCollapsed = this.scrollService.headerCollapsed;
 
   @ViewChild('mobileSearchInput') mobileSearchInput?: ElementRef<HTMLInputElement>;
 
@@ -412,7 +423,7 @@ export class AppLayoutComponent implements OnInit {
 
   private runLauncherSequence() {
     const steps = [
-      { time: 500, text: 'Connecting to Neural Mesh...', progress: 20 },
+      { time: 500, text: 'Connecting to Network...', progress: 20 },
       { time: 1200, text: 'Verifying Identity Keys...', progress: 45 },
       { time: 2000, text: 'Syncing Social Graph...', progress: 70 },
       { time: 2800, text: 'Decryption Complete.', progress: 90 },

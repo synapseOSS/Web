@@ -8,6 +8,8 @@ interface Particle {
   vx: number;
   vy: number;
   size: number;
+  originalX: number;
+  originalY: number;
 }
 
 @Component({
@@ -42,6 +44,12 @@ export class ParticlesComponent implements AfterViewInit, OnDestroy {
 
   private particleCount = 80;
   private colorDot = 'rgba(99, 102, 241, 0.5)'; // Indigo
+  
+  // Cursor tracking
+  private mouseX = -1000;
+  private mouseY = -1000;
+  private gravitationalPull = 150; // Radius of gravitational effect
+  private pullStrength = 0.3; // Strength of the pull
 
   constructor() {
     // React to theme changes
@@ -82,7 +90,19 @@ export class ParticlesComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  // Removed @HostListener('window:resize') as ResizeObserver handles it better
+  @HostListener('document:mousemove', ['$event'])
+  onMouseMove(event: MouseEvent) {
+    const canvas = this.canvasRef.nativeElement;
+    const rect = canvas.getBoundingClientRect();
+    this.mouseX = event.clientX - rect.left;
+    this.mouseY = event.clientY - rect.top;
+  }
+
+  @HostListener('document:mouseleave')
+  onMouseLeave() {
+    this.mouseX = -1000;
+    this.mouseY = -1000;
+  }
 
   private initCanvas() {
     const canvas = this.canvasRef.nativeElement;
@@ -103,12 +123,16 @@ export class ParticlesComponent implements AfterViewInit, OnDestroy {
     this.particles = [];
     for (let i = 0; i < this.particleCount; i++) {
       const size = Math.random() * 2 + 1;
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height;
       this.particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
+        x: x,
+        y: y,
         vx: (Math.random() - 0.5) * 0.8,
         vy: (Math.random() - 0.5) * 0.8,
-        size: size
+        size: size,
+        originalX: x,
+        originalY: y
       });
     }
   }
@@ -125,18 +149,83 @@ export class ParticlesComponent implements AfterViewInit, OnDestroy {
     // Update and draw particles
     for (let i = 0; i < this.particles.length; i++) {
       const p = this.particles[i];
-      // Move
+      
+      // Calculate distance to cursor
+      const dx = this.mouseX - p.x;
+      const dy = this.mouseY - p.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // Apply gravitational pull if within range
+      if (distance < this.gravitationalPull && distance > 0) {
+        // Calculate gravitational force (inverse square law with smoothing)
+        const force = (1 - distance / this.gravitationalPull) * this.pullStrength;
+        const angle = Math.atan2(dy, dx);
+        
+        // Apply force to velocity
+        p.vx += Math.cos(angle) * force;
+        p.vy += Math.sin(angle) * force;
+      } else {
+        // Return to original position when cursor is far
+        const returnDx = p.originalX - p.x;
+        const returnDy = p.originalY - p.y;
+        const returnDistance = Math.sqrt(returnDx * returnDx + returnDy * returnDy);
+        
+        if (returnDistance > 1) {
+          p.vx += returnDx * 0.01;
+          p.vy += returnDy * 0.01;
+        }
+      }
+      
+      // Apply damping to velocity
+      p.vx *= 0.95;
+      p.vy *= 0.95;
+      
+      // Move particle
       p.x += p.vx;
       p.y += p.vy;
+      
       // Bounce off edges
-      if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
-      if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
-      // Draw particle dot
+      if (p.x < 0 || p.x > canvas.width) {
+        p.vx *= -1;
+        p.x = Math.max(0, Math.min(canvas.width, p.x));
+      }
+      if (p.y < 0 || p.y > canvas.height) {
+        p.vy *= -1;
+        p.y = Math.max(0, Math.min(canvas.height, p.y));
+      }
+      
+      // Calculate opacity based on distance to cursor (space-time curve effect)
+      let opacity = 0.5;
+      if (distance < this.gravitationalPull) {
+        opacity = 0.5 + (1 - distance / this.gravitationalPull) * 0.5;
+      }
+      
+      // Draw particle with dynamic opacity
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fillStyle = this.colorDot;
+      const baseColor = this.colorDot.match(/rgba?\(([^)]+)\)/)?.[1] || '99, 102, 241';
+      ctx.fillStyle = `rgba(${baseColor}, ${opacity})`;
       ctx.fill();
+      
+      // Draw connection lines to nearby particles for space-time curve effect
+      for (let j = i + 1; j < this.particles.length; j++) {
+        const p2 = this.particles[j];
+        const pdx = p2.x - p.x;
+        const pdy = p2.y - p.y;
+        const pdist = Math.sqrt(pdx * pdx + pdy * pdy);
+        
+        if (pdist < 100) {
+          const lineOpacity = (1 - pdist / 100) * 0.2;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.strokeStyle = `rgba(${baseColor}, ${lineOpacity})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
     }
+    
     this.animationFrameId = requestAnimationFrame(this.animate);
   };
 }

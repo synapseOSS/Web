@@ -455,6 +455,16 @@ export class SocialService {
     this.posts.update(current => [post, ...current]);
   }
 
+  deletePost(postId: string) {
+    this.posts.update(current => current.filter(p => p.id !== postId));
+  }
+
+  updatePost(postId: string, updates: Partial<Post>) {
+    this.posts.update(current => 
+      current.map(p => p.id === postId ? { ...p, ...updates } : p)
+    );
+  }
+
   constructor() {
     this.loadCurrentUser();
     this.setupRealtimeSubscriptions();

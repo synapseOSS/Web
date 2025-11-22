@@ -106,7 +106,7 @@ interface DocRoute {
               <article class="prose dark:prose-invert max-w-none">
                 <h1 class="text-4xl font-bold mb-6 text-slate-900 dark:text-white">Introduction to Synapse</h1>
                 <p class="text-lg text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
-                  Synapse is an open-source social operating system designed to return data ownership to the user. Unlike traditional social networks that silo your data in walled gardens, Synapse uses a decentralized architecture that allows you to host your own "neural node" or join a community node of your choice.
+                  Synapse is an open-source social operating system designed to return data ownership to the user. Unlike traditional social networks that silo your data in walled gardens, Synapse uses a decentralized architecture that allows you to host your own node or join a community node of your choice.
                 </p>
                 
                 <div class="grid md:grid-cols-2 gap-6 mb-12">
@@ -122,7 +122,7 @@ interface DocRoute {
                         <app-icon name="zap" [size]="24"></app-icon>
                       </div>
                       <h3 class="text-lg font-bold mb-2 text-slate-900 dark:text-white">Zero Latency</h3>
-                      <p class="text-sm text-slate-600 dark:text-slate-400">Our proprietary "Neural Sync" protocol ensures updates propagate instantly across the mesh.</p>
+                      <p class="text-sm text-slate-600 dark:text-slate-400">Our sync protocol ensures updates propagate instantly across the mesh.</p>
                    </div>
                 </div>
 

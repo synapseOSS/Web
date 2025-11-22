@@ -160,7 +160,7 @@ import { MessagingService, Chat, Message } from '../services/messaging.service';
                  <app-icon name="mail" [size]="48" class="opacity-50"></app-icon>
               </div>
               <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Select a message</h2>
-              <p>Choose from your existing conversations, start a new one, or get ready to swim in the neural stream.</p>
+              <p>Choose from your existing conversations or start a new one.</p>
               <button class="mt-8 px-6 py-3 bg-indigo-600 text-white rounded-full font-bold hover:bg-indigo-500">
                  New Message
               </button>

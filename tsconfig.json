@@ -11,7 +11,8 @@
     ],
     "skipLibCheck": true,
     "types": [
-      "node"
+      "node",
+      "jasmine"
     ],
     "moduleResolution": "bundler",
     "isolatedModules": true,
@@ -26,6 +27,10 @@
   },
   "files": [
     "./index.tsx"
+  ],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.spec.ts"
   ],
   "angularCompilerOptions": {
     "disableTypeScriptVersionCheck": true

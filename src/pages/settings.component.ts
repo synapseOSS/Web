@@ -18,76 +18,97 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
       scrollbar-width: none;
     }
     
-    /* Fix mobile responsiveness */
+    /* Mobile-first professional design */
     @media (max-width: 1024px) {
       .settings-grid {
         display: block !important;
       }
+      
+      /* Remove fancy gradients on mobile */
+      .mobile-simple {
+        background: none !important;
+        box-shadow: none !important;
+      }
+      
+      /* Cleaner cards on mobile */
+      .mobile-card {
+        border-radius: 12px !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+      }
+      
+      /* Remove animations on mobile for performance */
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+      
+      /* Simpler buttons on mobile */
+      button {
+        transition: background-color 0.15s ease !important;
+      }
     }
   `],
   template: `
-    <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div class="min-h-screen bg-slate-50 dark:bg-slate-950 lg:bg-gradient-to-br lg:from-slate-50 lg:via-white lg:to-slate-50 lg:dark:from-slate-950 lg:dark:via-slate-900 lg:dark:to-slate-950">
       <!-- Header -->
-      <div class="sticky top-0 z-30 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 border-b border-slate-200/50 dark:border-slate-800/50 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div class="flex items-center gap-4">
-            <button (click)="goBack()" class="p-2.5 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all hover:scale-105 active:scale-95 touch-manipulation">
-              <app-icon name="arrow-left" [size]="22" class="text-slate-700 dark:text-slate-300"></app-icon>
+      <div class="sticky top-0 z-30 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 lg:backdrop-blur-xl lg:bg-white/80 lg:dark:bg-slate-900/80">
+        <div class="max-w-7xl mx-auto px-4 py-3 lg:px-6 lg:py-4">
+          <div class="flex items-center gap-3">
+            <button (click)="goBack()" class="p-2 -ml-2 active:bg-slate-100 dark:active:bg-slate-800 rounded-lg lg:hover:bg-slate-100 lg:dark:hover:bg-slate-800 touch-manipulation">
+              <app-icon name="arrow-left" [size]="20" class="text-slate-700 dark:text-slate-300"></app-icon>
             </button>
             <div class="flex-1">
-              <h1 class="font-bold text-2xl bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
+              <h1 class="font-bold text-xl lg:text-2xl text-slate-900 dark:text-white">
                 Settings
               </h1>
-              <p class="text-sm text-slate-600 dark:text-slate-400 mt-0.5">Customize your experience</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24">
-        <div class="settings-grid grid lg:grid-cols-[280px_1fr] gap-6">
+      <div class="max-w-7xl mx-auto px-0 lg:px-6 py-0 lg:py-8 pb-20 lg:pb-24">
+        <div class="settings-grid grid lg:grid-cols-[280px_1fr] lg:gap-6">
           <!-- Settings Navigation Sidebar -->
           <div class="lg:sticky lg:top-24 h-fit">
-            <!-- Mobile: Horizontal Scrollable Navigation -->
-            <div class="lg:hidden mb-6 -mx-4 px-4 overflow-x-auto">
-              <div class="flex gap-2 pb-2 scrollbar-hide" style="min-width: min-content;">
-                @for (section of settingsSections; track section.id) {
-                  <button
-                    (click)="activeSection.set(section.id)"
-                    [class.bg-gradient-to-r]="activeSection() === section.id"
-                    [class.from-indigo-500]="activeSection() === section.id"
-                    [class.to-purple-500]="activeSection() === section.id"
-                    [class.text-white]="activeSection() === section.id"
-                    [class.shadow-lg]="activeSection() === section.id"
-                    [class.shadow-indigo-500/30]="activeSection() === section.id"
-                    [class.bg-white]="activeSection() !== section.id"
-                    [class.dark:bg-slate-900]="activeSection() !== section.id"
-                    [class.border]="activeSection() !== section.id"
-                    [class.border-slate-200]="activeSection() !== section.id"
-                    [class.dark:border-slate-800]="activeSection() !== section.id"
-                    class="flex-shrink-0 px-4 py-2.5 flex items-center gap-2 rounded-xl transition-all whitespace-nowrap touch-manipulation active:scale-95">
-                    <app-icon 
-                      [name]="section.icon" 
-                      [size]="18" 
-                      [class.text-white]="activeSection() === section.id"
+            <!-- Mobile: Clean Tab Navigation -->
+            <div class="lg:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-[57px] z-20">
+              <div class="overflow-x-auto scrollbar-hide">
+                <div class="flex px-4 gap-1" style="min-width: min-content;">
+                  @for (section of settingsSections; track section.id) {
+                    <button
+                      (click)="activeSection.set(section.id)"
+                      [class.text-indigo-600]="activeSection() === section.id"
+                      [class.dark:text-indigo-400]="activeSection() === section.id"
+                      [class.border-b-2]="activeSection() === section.id"
+                      [class.border-indigo-600]="activeSection() === section.id"
+                      [class.dark:border-indigo-400]="activeSection() === section.id"
                       [class.text-slate-600]="activeSection() !== section.id"
-                      [class.dark:text-slate-400]="activeSection() !== section.id"></app-icon>
-                    <span 
-                      [class.font-semibold]="activeSection() === section.id"
-                      class="text-sm">
-                      {{ section.title }}
-                    </span>
-                  </button>
-                }
+                      [class.dark:text-slate-400]="activeSection() !== section.id"
+                      class="flex-shrink-0 px-4 py-3 flex items-center gap-2 whitespace-nowrap font-medium text-sm border-b-2 border-transparent">
+                      <app-icon 
+                        [name]="section.icon" 
+                        [size]="18"></app-icon>
+                      <span>{{ section.title }}</span>
+                    </button>
+                  }
+                </div>
               </div>
             </div>
 
             <!-- Desktop: Vertical Navigation -->
-            <div class="hidden lg:block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
-              <div class="p-4 border-b border-slate-200 dark:border-slate-800">
-                <h2 class="font-semibold text-sm text-slate-600 dark:text-slate-400 uppercase tracking-wider">Categories</h2>
+            <div class="hidden lg:block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-lg">
+              <div class="p-6 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30">
+                <div class="flex items-center gap-3">
+                  <div class="p-2.5 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl shadow-lg">
+                    <app-icon name="settings" [size]="20" class="text-white"></app-icon>
+                  </div>
+                  <div>
+                    <h2 class="font-bold text-slate-900 dark:text-white">Settings</h2>
+                    <p class="text-xs text-slate-600 dark:text-slate-400">Configure preferences</p>
+                  </div>
+                </div>
               </div>
-              <nav class="p-2">
+              <nav class="p-3">
                 @for (section of settingsSections; track section.id) {
                   <button
                     (click)="activeSection.set(section.id)"
@@ -97,27 +118,19 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
                     [class.text-white]="activeSection() === section.id"
                     [class.shadow-lg]="activeSection() === section.id"
                     [class.shadow-indigo-500/30]="activeSection() === section.id"
-                    class="w-full px-4 py-3 mb-1 flex items-center gap-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group relative overflow-hidden touch-manipulation active:scale-95">
-                    @if (activeSection() === section.id) {
-                      <div class="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 animate-pulse"></div>
-                    }
-                    <div class="relative z-10 flex items-center gap-3 flex-1">
-                      <app-icon 
-                        [name]="section.icon" 
-                        [size]="20" 
-                        [class.text-white]="activeSection() === section.id"
-                        [class.text-slate-600]="activeSection() !== section.id"
-                        [class.dark:text-slate-400]="activeSection() !== section.id"
-                        class="transition-transform group-hover:scale-110"></app-icon>
-                      <span 
-                        [class.font-semibold]="activeSection() === section.id"
-                        class="text-sm transition-all">
-                        {{ section.title }}
-                      </span>
-                    </div>
-                    @if (activeSection() === section.id) {
-                      <div class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></div>
-                    }
+                    class="w-full px-4 py-3.5 mb-1.5 flex items-center gap-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group">
+                    <app-icon 
+                      [name]="section.icon" 
+                      [size]="18" 
+                      [class.text-white]="activeSection() === section.id"
+                      [class.text-indigo-600]="activeSection() !== section.id"
+                      [class.dark:text-indigo-400]="activeSection() !== section.id"></app-icon>
+                    <span 
+                      [class.font-bold]="activeSection() === section.id"
+                      [class.font-medium]="activeSection() !== section.id"
+                      class="text-sm">
+                      {{ section.title }}
+                    </span>
                   </button>
                 }
               </nav>
@@ -125,46 +138,46 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
           </div>
 
           <!-- Active Section Content -->
-          <div class="min-h-[600px]">
+          <div class="min-h-[400px] lg:min-h-[600px]">
             @switch (activeSection()) {
               @case ('upload') {
-                <div class="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-        <!-- Section Header -->
-        <div class="mb-6">
+                <div class="space-y-4 lg:space-y-6">
+        <!-- Section Header - Desktop Only -->
+        <div class="hidden lg:block mb-6">
           <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Upload Providers</h2>
           <p class="text-slate-600 dark:text-slate-400">Configure file upload services for different media types</p>
         </div>
 
         <!-- Provider Selection by File Type -->
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
-          <div class="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 dark:from-purple-500/5 dark:to-indigo-500/5 px-6 py-4 border-b border-slate-200 dark:border-slate-800">
+        <div class="bg-white dark:bg-slate-900 lg:border border-slate-200 dark:border-slate-800 lg:rounded-2xl overflow-hidden lg:shadow-sm">
+          <div class="bg-slate-50 dark:bg-slate-950 lg:bg-gradient-to-r lg:from-purple-500/10 lg:to-indigo-500/10 lg:dark:from-purple-500/5 lg:dark:to-indigo-500/5 px-4 py-3 lg:px-6 lg:py-4 border-b border-slate-200 dark:border-slate-800">
             <div class="flex items-center gap-3">
-              <div class="p-2.5 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl shadow-lg shadow-purple-500/30">
-                <app-icon name="cloud" [size]="22" class="text-white"></app-icon>
+              <div class="p-2 lg:p-2.5 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-lg lg:rounded-xl lg:shadow-lg">
+                <app-icon name="cloud" [size]="20" class="text-white lg:[size]='22'"></app-icon>
               </div>
               <div class="flex-1">
-                <h3 class="font-bold text-lg text-slate-900 dark:text-white">Provider Selection</h3>
-                <p class="text-sm text-slate-600 dark:text-slate-400">
-                  Choose different providers for each file type
+                <h3 class="font-bold text-base lg:text-lg text-slate-900 dark:text-white">Provider Selection</h3>
+                <p class="text-xs lg:text-sm text-slate-600 dark:text-slate-400">
+                  Choose providers for each file type
                 </p>
               </div>
             </div>
           </div>
           
-          <div class="p-6 space-y-5">
+          <div class="p-4 lg:p-6 space-y-4 lg:space-y-5">
 
             <!-- Photo Provider -->
-            <div class="space-y-2.5">
+            <div class="space-y-2">
               <div class="flex items-center gap-2">
-                <span class="text-2xl">📷</span>
-                <label class="block text-sm font-bold text-slate-900 dark:text-white">
+                <span class="text-xl lg:text-2xl">📷</span>
+                <label class="block text-sm font-semibold text-slate-900 dark:text-white">
                   Photo Provider
                 </label>
               </div>
               <select 
                 [(ngModel)]="photoProvider"
                 (change)="onProviderChange()"
-                class="w-full bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer font-medium">
+                class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg lg:rounded-xl px-3 py-2.5 lg:px-4 lg:py-3.5 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none cursor-pointer text-sm lg:text-base">
                 @for (provider of photoProviders; track provider.id) {
                   <option [value]="provider.id">{{ provider.name }}</option>
                 }
@@ -172,17 +185,17 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
             </div>
 
             <!-- Video Provider -->
-            <div class="space-y-2.5">
+            <div class="space-y-2">
               <div class="flex items-center gap-2">
-                <span class="text-2xl">🎥</span>
-                <label class="block text-sm font-bold text-slate-900 dark:text-white">
+                <span class="text-xl lg:text-2xl">🎥</span>
+                <label class="block text-sm font-semibold text-slate-900 dark:text-white">
                   Video Provider
                 </label>
               </div>
               <select 
                 [(ngModel)]="videoProvider"
                 (change)="onProviderChange()"
-                class="w-full bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer font-medium">
+                class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg lg:rounded-xl px-3 py-2.5 lg:px-4 lg:py-3.5 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none cursor-pointer text-sm lg:text-base">
                 @for (provider of videoProviders; track provider.id) {
                   <option [value]="provider.id">{{ provider.name }}</option>
                 }
@@ -190,17 +203,17 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
             </div>
 
             <!-- Other Files Provider -->
-            <div class="space-y-2.5">
+            <div class="space-y-2">
               <div class="flex items-center gap-2">
-                <span class="text-2xl">📄</span>
-                <label class="block text-sm font-bold text-slate-900 dark:text-white">
+                <span class="text-xl lg:text-2xl">📄</span>
+                <label class="block text-sm font-semibold text-slate-900 dark:text-white">
                   Other Files Provider
                 </label>
               </div>
               <select 
                 [(ngModel)]="otherProvider"
                 (change)="onProviderChange()"
-                class="w-full bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer font-medium">
+                class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg lg:rounded-xl px-3 py-2.5 lg:px-4 lg:py-3.5 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none cursor-pointer text-sm lg:text-base">
                 @for (provider of otherProviders; track provider.id) {
                   <option [value]="provider.id">{{ provider.name }}</option>
                 }
@@ -457,20 +470,20 @@ import { ImageUploadService, ImageProvider, ProviderConfig, FileType } from '../
         }
 
         <!-- Save Button -->
-        <div class="sticky bottom-6 z-20 mt-8">
+        <div class="sticky bottom-0 lg:bottom-6 z-20 mt-4 lg:mt-8 -mx-4 lg:mx-0 p-4 lg:p-0 bg-white dark:bg-slate-900 lg:bg-transparent border-t lg:border-0 border-slate-200 dark:border-slate-800">
           <button 
             (click)="saveConfiguration()"
             [disabled]="isSaving()"
-            class="w-full px-6 py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-2xl shadow-indigo-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] hover:shadow-indigo-500/40 hover:-translate-y-0.5 touch-manipulation">
+            class="w-full px-4 py-3 lg:px-6 lg:py-4 rounded-lg lg:rounded-2xl font-semibold lg:font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 active:from-indigo-700 active:to-purple-700 lg:hover:from-indigo-500 lg:hover:to-purple-500 shadow-lg lg:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation">
             @if (isSaving()) {
-              <span class="flex items-center justify-center gap-3">
-                <div class="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
-                <span class="text-lg">Saving Changes...</span>
+              <span class="flex items-center justify-center gap-2 lg:gap-3">
+                <div class="w-4 h-4 lg:w-5 lg:h-5 border-2 lg:border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <span class="text-sm lg:text-lg">Saving...</span>
               </span>
             } @else {
               <span class="flex items-center justify-center gap-2">
-                <app-icon name="check" [size]="20"></app-icon>
-                <span class="text-lg">Save Configuration</span>
+                <app-icon name="check" [size]="18" class="lg:[size]='20'"></app-icon>
+                <span class="text-sm lg:text-lg">Save Configuration</span>
               </span>
             }
           </button>

@@ -65,7 +65,7 @@
         "-y",
         "@hugeicons/mcp-server"
       ],
-      "disabled": false,
+      "disabled": true,
       "autoApprove": []
     }
   }

@@ -50,13 +50,13 @@ interface Collaborator {
            <button (click)="cancel()" class="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400">
               <app-icon name="x" [size]="24"></app-icon>
            </button>
-           <h1 class="font-bold text-lg text-slate-900 dark:text-white">Create Post</h1>
+           <h1 class="font-bold text-lg text-slate-900 dark:text-white">{{ editMode() ? 'Edit Post' : 'Create Post' }}</h1>
         </div>
         <button 
           (click)="submit()" 
           [disabled]="(!text && mediaItems().length === 0) || isPosting()"
           class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-full transition-all shadow-lg shadow-indigo-500/20">
-          {{ isPosting() ? 'Posting...' : 'Post' }}
+          {{ isPosting() ? (editMode() ? 'Updating...' : 'Posting...') : (editMode() ? 'Update' : 'Post') }}
         </button>
       </div>
 
@@ -572,6 +572,10 @@ export class ComposeComponent {
   mentions = signal<string[]>([]);
   hashtags = signal<string[]>([]);
   
+  // Edit mode
+  editMode = signal(false);
+  editPostId = signal<string | null>(null);
+  
   // Poll state
   showPollCreator = signal(false);
   poll = signal<Poll | null>(null);
@@ -593,6 +597,66 @@ export class ComposeComponent {
   readonly MAX_MEDIA = 10;
   readonly MAX_POLL_OPTIONS = 4;
   readonly MAX_COLLABORATORS = 5;
+
+  async ngOnInit() {
+    // Check if we're in edit mode
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit');
+    
+    if (editId) {
+      await this.loadPostForEdit(editId);
+    }
+  }
+
+  async loadPostForEdit(postId: string) {
+    try {
+      const { data, error } = await this.supabase
+        .from('posts')
+        .select('*')
+        .eq('id', postId)
+        .single();
+
+      if (error) throw error;
+
+      this.editMode.set(true);
+      this.editPostId.set(postId);
+      this.text = data.post_text || '';
+      this.mediaItems.set(data.media_items || []);
+      this.postVisibility.set(data.post_visibility || 'public');
+      
+      if (data.has_location) {
+        this.location.set({
+          name: data.location_name,
+          address: data.location_address,
+          latitude: data.location_latitude,
+          longitude: data.location_longitude,
+          place_id: data.location_place_id
+        });
+      }
+
+      if (data.has_poll) {
+        this.poll.set({
+          question: data.poll_question,
+          options: data.poll_options?.map((opt: any, idx: number) => ({
+            id: idx.toString(),
+            text: opt.text
+          })) || [],
+          duration_hours: 24
+        });
+      }
+
+      // Set text in mention input after a short delay
+      setTimeout(() => {
+        if (this.mentionInput) {
+          this.mentionInput.setText(this.text);
+        }
+      }, 100);
+    } catch (err) {
+      console.error('Error loading post:', err);
+      alert('Failed to load post for editing');
+      this.router.navigate(['/app/feed']);
+    }
+  }
 
   cancel() {
     this.router.navigate(['/app/feed']);
@@ -851,86 +915,149 @@ export class ComposeComponent {
     this.isPosting.set(true);
     
     try {
-      // Determine post type
-      let postType: 'TEXT' | 'IMAGE' | 'VIDEO' = 'TEXT';
-      if (this.mediaItems().length > 0) {
-        postType = this.mediaItems().some(m => m.type === 'VIDEO') ? 'VIDEO' : 'IMAGE';
+      if (this.editMode()) {
+        await this.updatePost();
+      } else {
+        await this.createPost();
       }
-
-      const currentUser = this.socialService.currentUser();
       
-      // Insert post into database
-      const { data: postData, error: postError } = await this.supabase
-        .from('posts')
-        .insert({
-          author_uid: currentUser.uid,
-          post_text: this.text,
-          post_type: postType,
-          post_visibility: this.postVisibility(),
-          media_items: this.mediaItems(),
-          has_poll: !!this.poll(),
-          poll_question: this.poll()?.question,
-          poll_options: this.poll()?.options.map(o => ({ text: o.text, votes: 0 })),
-          poll_end_time: this.poll() ? new Date(Date.now() + this.poll()!.duration_hours * 60 * 60 * 1000).toISOString() : null,
-          has_location: !!this.location(),
-          location_name: this.location()?.name,
-          location_address: this.location()?.address,
-          location_latitude: this.location()?.latitude,
-          location_longitude: this.location()?.longitude,
-          location_place_id: this.location()?.place_id,
-          created_at: new Date().toISOString(),
-          timestamp: Date.now()
-        })
-        .select()
-        .single();
-
-      if (postError) throw postError;
-
-      // Create the post object for local state
-      const newPost: Post = {
-        id: postData.id,
-        author_uid: currentUser.uid,
-        user: currentUser,
-        post_text: this.text,
-        media: this.mediaItems(),
-        likes_count: 0,
-        comments_count: 0,
-        views_count: 0,
-        created_at: postData.created_at,
-        post_type: postType
-      };
-
-      this.socialService.addPost(newPost);
-
-      // Save mentions and hashtags to database
-      if (this.mentions().length > 0) {
-        await this.mentionService.createMentions(this.mentions(), newPost.id, 'post');
-      }
-
-      if (this.hashtags().length > 0) {
-        await this.hashtagService.createHashtags(this.hashtags(), newPost.id, 'post');
-      }
-
-      // Save collaborators as mentions
-      if (this.collaborators().length > 0) {
-        for (const collab of this.collaborators()) {
-          await this.supabase
-            .from('mentions')
-            .insert({
-              post_id: newPost.id,
-              mentioned_user_id: collab.uid,
-              mentioned_by_user_id: currentUser.uid,
-              mention_type: 'post'
-            });
-        }
-      }
-
       this.isPosting.set(false);
       this.router.navigate(['/app/feed']);
     } catch (err) {
-      console.error('Error creating post:', err);
-      alert('Failed to create post. Please try again.');
+      console.error('Error saving post:', err);
+      alert(`Failed to ${this.editMode() ? 'update' : 'create'} post. Please try again.`);
       this.isPosting.set(false);
+    }
+  }
+
+  private async createPost() {
+    // Determine post type
+    let postType: 'TEXT' | 'IMAGE' | 'VIDEO' = 'TEXT';
+    if (this.mediaItems().length > 0) {
+      postType = this.mediaItems().some(m => m.type === 'VIDEO') ? 'VIDEO' : 'IMAGE';
+    }
+
+    const currentUser = this.socialService.currentUser();
+    
+    // Insert post into database
+    const { data: postData, error: postError } = await this.supabase
+      .from('posts')
+      .insert({
+        author_uid: currentUser.uid,
+        post_text: this.text,
+        post_type: postType,
+        post_visibility: this.postVisibility(),
+        media_items: this.mediaItems(),
+        has_poll: !!this.poll(),
+        poll_question: this.poll()?.question,
+        poll_options: this.poll()?.options.map(o => ({ text: o.text, votes: 0 })),
+        poll_end_time: this.poll() ? new Date(Date.now() + this.poll()!.duration_hours * 60 * 60 * 1000).toISOString() : null,
+        has_location: !!this.location(),
+        location_name: this.location()?.name,
+        location_address: this.location()?.address,
+        location_latitude: this.location()?.latitude,
+        location_longitude: this.location()?.longitude,
+        location_place_id: this.location()?.place_id,
+        created_at: new Date().toISOString(),
+        timestamp: Date.now()
+      })
+      .select()
+      .single();
+
+    if (postError) throw postError;
+
+    // Create the post object for local state
+    const newPost: Post = {
+      id: postData.id,
+      author_uid: currentUser.uid,
+      user: currentUser,
+      post_text: this.text,
+      media: this.mediaItems(),
+      likes_count: 0,
+      comments_count: 0,
+      views_count: 0,
+      created_at: postData.created_at,
+      post_type: postType
+    };
+
+    this.socialService.addPost(newPost);
+
+    // Save mentions and hashtags to database
+    if (this.mentions().length > 0) {
+      await this.mentionService.createMentions(this.mentions(), newPost.id, 'post');
+    }
+
+    if (this.hashtags().length > 0) {
+      await this.hashtagService.createHashtags(this.hashtags(), newPost.id, 'post');
+    }
+
+    // Save collaborators as mentions
+    if (this.collaborators().length > 0) {
+      for (const collab of this.collaborators()) {
+        await this.supabase
+          .from('mentions')
+          .insert({
+            post_id: newPost.id,
+            mentioned_user_id: collab.uid,
+            mentioned_by_user_id: currentUser.uid,
+            mention_type: 'post'
+          });
+      }
+    }
+  }
+
+  private async updatePost() {
+    const postId = this.editPostId();
+    if (!postId) return;
+
+    // Determine post type
+    let postType: 'TEXT' | 'IMAGE' | 'VIDEO' = 'TEXT';
+    if (this.mediaItems().length > 0) {
+      postType = this.mediaItems().some(m => m.type === 'VIDEO') ? 'VIDEO' : 'IMAGE';
+    }
+
+    // Update post in database
+    const { error: updateError } = await this.supabase
+      .from('posts')
+      .update({
+        post_text: this.text,
+        post_type: postType,
+        post_visibility: this.postVisibility(),
+        media_items: this.mediaItems(),
+        has_poll: !!this.poll(),
+        poll_question: this.poll()?.question,
+        poll_options: this.poll()?.options.map(o => ({ text: o.text, votes: 0 })),
+        has_location: !!this.location(),
+        location_name: this.location()?.name,
+        location_address: this.location()?.address,
+        location_latitude: this.location()?.latitude,
+        location_longitude: this.location()?.longitude,
+        location_place_id: this.location()?.place_id,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', postId);
+
+    if (updateError) throw updateError;
+
+    // Update local state
+    this.socialService.updatePost(postId, {
+      post_text: this.text,
+      media: this.mediaItems(),
+      post_type: postType
+    });
+
+    // Update mentions and hashtags
+    // Delete old mentions/hashtags
+    await this.supabase.from('mentions').delete().eq('post_id', postId);
+    await this.supabase.from('hashtags').delete().eq('post_id', postId);
+
+    // Add new ones
+    if (this.mentions().length > 0) {
+      await this.mentionService.createMentions(this.mentions(), postId, 'post');
+    }
+
+    if (this.hashtags().length > 0) {
+      await this.hashtagService.createHashtags(this.hashtags(), postId, 'post');
     }
   }
 }

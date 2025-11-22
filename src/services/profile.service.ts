@@ -66,10 +66,10 @@ export class ProfileService {
         this.currentProfile.set(null);
       }
     };
-    
+
     // Initial check
     checkUser();
-    
+
     // Watch for auth changes
     this.supabase.auth.onAuthStateChange(() => {
       checkUser();
@@ -91,7 +91,7 @@ export class ProfileService {
         .single();
 
       if (error) throw error;
-      
+
       this.currentProfile.set(data as UserProfile);
     } catch (err: any) {
       console.error('Error loading profile:', err);
@@ -176,9 +176,9 @@ export class ProfileService {
 
     try {
       console.log('Uploading avatar...');
-      
+
       const url = await this.imageUpload.uploadImage(file, `avatar-${user.id}`);
-      
+
       if (!url) {
         throw new Error('Upload failed');
       }
@@ -201,9 +201,9 @@ export class ProfileService {
 
     try {
       console.log('Uploading cover image...');
-      
+
       const url = await this.imageUpload.uploadImage(file, `cover-${user.id}`);
-      
+
       if (!url) {
         throw new Error('Upload failed');
       }
@@ -238,7 +238,24 @@ export class ProfileService {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+
+      // Map to Post interface
+      return (data || []).map((post: any) => ({
+        id: post.id,
+        author_uid: post.author_uid,
+        user: post.users, // Map users -> user
+        post_text: post.post_text || '',
+        media: post.media_items || [], // Map media_items -> media
+        likes_count: post.likes_count || 0,
+        comments_count: post.comments_count || 0,
+        views_count: post.views_count || 0,
+        created_at: post.created_at,
+        is_liked: false, // Default, will be updated if needed
+        post_type: post.post_type || 'TEXT',
+        has_location: post.has_location,
+        location_name: post.location_name,
+        collaborators: post.collaborators || []
+      }));
     } catch (err) {
       console.error('Error fetching user posts:', err);
       return [];

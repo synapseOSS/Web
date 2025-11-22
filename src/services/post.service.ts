@@ -138,11 +138,9 @@ export class PostService {
           .from('post_hashtags')
           .insert({ post_id: postId, hashtag_id: hashtagData.id });
 
-        // Increment usage count
+        // Increment usage count using RPC
         await this.supabase
-          .from('hashtags')
-          .update({ usage_count: this.supabase.raw('usage_count + 1') })
-          .eq('id', hashtagData.id);
+          .rpc('increment_hashtag_usage', { hashtag_id: hashtagData.id });
       }
     }
   }

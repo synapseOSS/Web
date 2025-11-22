@@ -32,7 +32,7 @@ import { ParticlesComponent } from '../components/particles.component';
           
           <h1 class="text-2xl font-bold mb-2 text-slate-900 dark:text-white">{{ isLogin() ? 'Welcome Back' : 'Join Synapse' }}</h1>
           <p class="text-sm text-slate-600 dark:text-slate-400">
-            {{ isLogin() ? 'Enter your credentials to access the neural network.' : 'Create your decentralized identity.' }}
+            {{ isLogin() ? 'Enter your credentials to access your account.' : 'Create your decentralized identity.' }}
           </p>
         </div>
 
@@ -58,9 +58,9 @@ import { ParticlesComponent } from '../components/particles.component';
               <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Password</label>
               <div class="relative">
                 <input 
-                  type="password" 
+                  [type]="showPassword() ? 'text' : 'password'" 
                   formControlName="password"
-                  class="w-full pl-10 pr-4 py-3 border rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors
+                  class="w-full pl-10 pr-12 py-3 border rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors
                          bg-white border-slate-200 text-slate-900 placeholder-slate-400
                          dark:bg-slate-950/50 dark:border-white/10 dark:text-white dark:placeholder-slate-600"
                   placeholder="••••••••"
@@ -68,6 +68,14 @@ import { ParticlesComponent } from '../components/particles.component';
                 <div class="absolute left-3 top-3.5 text-slate-500">
                   <app-icon name="shield" [size]="18"></app-icon>
                 </div>
+                <button
+                  type="button"
+                  (click)="showPassword.set(!showPassword())"
+                  class="absolute right-3 top-3.5 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                  [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+                >
+                  <app-icon [name]="showPassword() ? 'eye-off' : 'eye'" [size]="18"></app-icon>
+                </button>
               </div>
             </div>
 
@@ -124,6 +132,7 @@ export class AuthComponent {
   loading = signal(false);
   error = signal<string | null>(null);
   successMessage = signal<string | null>(null);
+  showPassword = signal(false);
 
   form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],

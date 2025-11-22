@@ -24,18 +24,19 @@ import { authGuard } from './guards/auth.guard';
 import { BookmarksComponent } from './pages/bookmarks.component';
 import { ExploreComponent } from './pages/explore.component';
 import { NotificationsComponent } from './pages/notifications.component';
+import { StoryArchiveComponent } from './components/story-archive.component';
 
 export const routes: Routes = [
   // Settings Page (Standalone, No Layout)
-  { 
-    path: 'app/settings', 
+  {
+    path: 'app/settings',
     component: SettingsComponent,
     canActivate: [authGuard]
   },
 
   // Web App Routes (Protected, No Landing Navbar/Footer)
-  { 
-    path: 'app', 
+  {
+    path: 'app',
     component: AppLayoutComponent,
     canActivate: [authGuard],
     children: [
@@ -50,7 +51,8 @@ export const routes: Routes = [
       { path: 'post/:id', component: PostDetailComponent },
       { path: 'bookmarks', component: BookmarksComponent },
       { path: 'explore', component: ExploreComponent },
-      { path: 'notifications', component: NotificationsComponent }
+      { path: 'notifications', component: NotificationsComponent },
+      { path: 'archive', component: StoryArchiveComponent }
     ]
   },
 
@@ -72,7 +74,7 @@ export const routes: Routes = [
       { path: 'admin', component: AdminComponent, canActivate: [authGuard] },
     ]
   },
-  
+
   // Fallback
   { path: '**', redirectTo: '' }
 ];

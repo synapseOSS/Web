@@ -225,11 +225,11 @@ import { AuthService } from '../services/auth.service';
                  <div class="grid grid-cols-3 gap-1 p-1">
                    @for (post of userMediaPosts(); track post.id) {
                      <div (click)="navigateToPost(post.id)" class="aspect-square bg-slate-100 dark:bg-slate-900 rounded overflow-hidden cursor-pointer hover:opacity-80 transition-opacity">
-                       @if (post.media_items && post.media_items.length > 0) {
-                         @if (post.media_items[0].type === 'IMAGE') {
-                           <img [src]="post.media_items[0].url" class="w-full h-full object-cover">
+                       @if (post.media && post.media.length > 0) {
+                         @if (post.media[0].type === 'IMAGE') {
+                           <img [src]="post.media[0].url" class="w-full h-full object-cover">
                          } @else {
-                           <video [src]="post.media_items[0].url" class="w-full h-full object-cover"></video>
+                           <video [src]="post.media[0].url" class="w-full h-full object-cover"></video>
                          }
                        }
                      </div>
@@ -432,13 +432,13 @@ export class ProfileComponent implements OnInit {
   async loadCurrentUserProfile() {
     // Wait for profile to load if not already loaded
     let currentProfile = this.profileService.currentProfile();
-    
+
     if (!currentProfile) {
       // Profile not loaded yet, try to load it
       await this.profileService.loadCurrentUserProfile();
       currentProfile = this.profileService.currentProfile();
     }
-    
+
     if (currentProfile) {
       this.profile.set(currentProfile);
       await this.loadUserPosts(currentProfile.uid);
@@ -459,17 +459,17 @@ export class ProfileComponent implements OnInit {
   async loadUserPosts(uid: string) {
     this.isLoadingPosts.set(true);
     const posts = await this.profileService.getUserPosts(uid);
-    
+
     // Separate posts by type
     this.userPosts.set(posts);
-    
+
     // Filter media posts (posts with images or videos)
-    const mediaPosts = posts.filter(p => p.media_items && p.media_items.length > 0);
+    const mediaPosts = posts.filter(p => p.media && p.media.length > 0);
     this.userMediaPosts.set(mediaPosts);
-    
+
     // TODO: Load replies from comments table
     this.userReplies.set([]);
-    
+
     this.isLoadingPosts.set(false);
   }
 
@@ -481,7 +481,7 @@ export class ProfileComponent implements OnInit {
   async followUser() {
     const p = this.profile();
     if (!p) return;
-    
+
     const success = await this.profileService.followUser(p.uid);
     if (success) {
       this.isFollowing.set(true);
@@ -493,7 +493,7 @@ export class ProfileComponent implements OnInit {
   async unfollowUser() {
     const p = this.profile();
     if (!p) return;
-    
+
     const success = await this.profileService.unfollowUser(p.uid);
     if (success) {
       this.isFollowing.set(false);
@@ -611,19 +611,19 @@ export class ProfileComponent implements OnInit {
   getProfileAge(): number {
     const p = this.profile();
     if (!p || !p.join_date) return 0;
-    
+
     const joinDate = new Date(p.join_date);
     const now = new Date();
     const diffMs = now.getTime() - joinDate.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
+
     // Return percentage (0-100) based on days, capped at 365 days = 100%
     return Math.min((diffDays / 365) * 100, 100);
   }
 
   getProfileAgeGradient(): string {
     const age = this.getProfileAge();
-    
+
     // Gradient colors based on age
     if (age < 25) {
       // New user: Blue to Cyan
@@ -643,12 +643,12 @@ export class ProfileComponent implements OnInit {
   getProfileAgeLabel(): string {
     const p = this.profile();
     if (!p || !p.join_date) return '';
-    
+
     const joinDate = new Date(p.join_date);
     const now = new Date();
     const diffMs = now.getTime() - joinDate.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 30) {
       return `${diffDays} days`;
     } else if (diffDays < 365) {
