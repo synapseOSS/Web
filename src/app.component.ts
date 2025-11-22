@@ -3,11 +3,12 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { PwaService } from './services/pwa.service';
+import { LiveRegionComponent } from './components/live-region.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, LiveRegionComponent],
   templateUrl: './app.component.html'
 })
 export class AppComponent implements OnInit {

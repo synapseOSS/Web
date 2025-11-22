@@ -610,14 +610,7 @@
 
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 25. Add accessibility features
-
-
-
-
-
-
-
+- [x] 25. Add accessibility features
   - Implement keyboard navigation
   - Add ARIA labels and roles
   - Implement screen reader announcements
@@ -625,21 +618,21 @@
   - Add alt text support for stories
   - _Requirements: 13.1-13.6_
 
-- [ ] 26. Add internationalization support
+- [x] 26. Add internationalization support
   - Set up i18n framework
   - Extract all UI strings
   - Implement locale-based formatting (dates, numbers)
   - Support RTL languages
   - _Requirements: 13.7-13.10_
 
-- [ ] 27. Set up monitoring and logging
+- [x] 27. Set up monitoring and logging
   - Integrate error tracking (Sentry)
   - Implement performance monitoring
   - Set up storage usage alerts
   - Implement real-time connection monitoring
   - _Requirements: 11.10_
 
-- [ ] 28. Create database migration scripts
+- [x] 28. Create database migration scripts
   - Create initial schema migration
   - Create RLS policies migration
   - Create functions and triggers migration
@@ -647,5 +640,26 @@
   - Document migration process
   - _Requirements: All database-related requirements_
 
-- [ ] 29. Final checkpoint - Ensure all tests pass
+- [x] 29. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
+
+## Storage Setup Required
+
+To fix the "bucket not found" error, run the SQL in `setup-storage.sql` in your Supabase SQL Editor:
+
+```bash
+# Option 1: Via Supabase Dashboard
+# 1. Go to https://supabase.com/dashboard
+# 2. Select your project
+# 3. Go to SQL Editor
+# 4. Copy and paste contents of setup-storage.sql
+# 5. Run the query
+
+# Option 2: Via Supabase CLI (if linked)
+supabase db execute -f setup-storage.sql
+```
+
+This creates:
+- `story-media` bucket (public read, authenticated upload)
+- `story-thumbnails` bucket (public read, authenticated upload)
+- RLS policies for both buckets

@@ -33,16 +33,17 @@ interface InteractiveElementUI {
   standalone: true,
   imports: [CommonModule, FormsModule, IconComponent],
   template: `
-    <div class="fixed inset-0 z-50 bg-black flex flex-col">
+    <div class="fixed inset-0 z-50 bg-black flex flex-col" role="dialog" aria-modal="true" aria-labelledby="story-creator-title">
       <!-- Header -->
       <div class="flex items-center justify-between p-4 bg-black/50 backdrop-blur-sm">
-        <button (click)="cancel()" class="p-2 text-white hover:bg-white/10 rounded-full transition-colors">
+        <button (click)="cancel()" class="p-2 text-white hover:bg-white/10 rounded-full transition-colors" aria-label="Cancel story creation">
           <app-icon name="x" [size]="24"></app-icon>
         </button>
-        <h1 class="text-white font-bold text-lg">Create Story</h1>
+        <h1 id="story-creator-title" class="text-white font-bold text-lg">Create Story</h1>
         <button 
           (click)="publish()" 
           [disabled]="!mediaFile() || isUploading()"
+          [attr.aria-busy]="isUploading()"
           class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-full transition-all">
           {{ isUploading() ? 'Publishing...' : 'Publish' }}
         </button>
@@ -53,14 +54,16 @@ interface InteractiveElementUI {
         @if (!mediaFile()) {
           <!-- Upload Area -->
           <div class="text-center">
-            <label class="cursor-pointer">
+            <label class="cursor-pointer" for="story-media-upload">
               <input 
+                id="story-media-upload"
                 type="file" 
                 accept="image/*,video/*" 
                 class="hidden" 
+                aria-label="Upload photo or video for story"
                 (change)="onFileSelected($event)">
-              <div class="flex flex-col items-center gap-4 p-8 border-2 border-dashed border-white/30 rounded-2xl hover:border-white/50 transition-colors">
-                <app-icon name="image" [size]="64" class="text-white/50"></app-icon>
+              <div class="flex flex-col items-center gap-4 p-8 border-2 border-dashed border-white/30 rounded-2xl hover:border-white/50 transition-colors" role="button" tabindex="0">
+                <app-icon name="image" [size]="64" class="text-white/50" aria-hidden="true"></app-icon>
                 <div class="text-white">
                   <p class="font-bold text-xl mb-2">Add Photo or Video</p>
                   <p class="text-sm text-white/70">Drag and drop or click to browse</p>
@@ -77,7 +80,7 @@ interface InteractiveElementUI {
                 [src]="mediaPreview()" 
                 [style.filter]="selectedFilter()?.cssFilter"
                 class="max-w-full max-h-full object-contain"
-                alt="Story preview">
+                [alt]="'Story preview' + (textContent() ? ': ' + textContent() : '')">
             } @else {
               <video 
                 [src]="mediaPreview()" 
