@@ -32,7 +32,7 @@ import { ParticlesComponent } from '../components/particles.component';
           
           <h1 class="text-2xl font-bold mb-2 text-slate-900 dark:text-white">{{ isLogin() ? 'Welcome Back' : 'Join Synapse' }}</h1>
           <p class="text-sm text-slate-600 dark:text-slate-400">
-            {{ isLogin() ? 'Enter your credentials to access the neural network.' : 'Create your decentralized identity.' }}
+            {{ isLogin() ? 'Enter your credentials to access your account.' : 'Create your decentralized identity.' }}
           </p>
         </div>
 

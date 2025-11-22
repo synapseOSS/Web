@@ -50,7 +50,7 @@ import { RealtimeService } from '../services/realtime.service';
            </div>
            <div class="flex-1 cursor-pointer" routerLink="/app/compose">
              <div class="w-full bg-slate-100 dark:bg-slate-900/50 rounded-full px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center justify-between">
-                <span>What's happening on the neural net?</span>
+                <span>What's happening?</span>
                 <app-icon name="image" [size]="20" class="text-indigo-500"></app-icon>
              </div>
            </div>

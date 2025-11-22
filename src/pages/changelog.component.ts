@@ -57,7 +57,7 @@ import { ParticlesComponent } from '../components/particles.component';
           @if (loading()) {
              <div class="flex flex-col items-center justify-center py-20">
                <div class="w-8 h-8 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
-               <div class="text-slate-500">Syncing with neural network...</div>
+               <div class="text-slate-500">Loading updates...</div>
              </div>
           } @else if (error()) {
              <div class="p-6 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-200 text-center">

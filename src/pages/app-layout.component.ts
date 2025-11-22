@@ -412,7 +412,7 @@ export class AppLayoutComponent implements OnInit {
 
   private runLauncherSequence() {
     const steps = [
-      { time: 500, text: 'Connecting to Neural Mesh...', progress: 20 },
+      { time: 500, text: 'Connecting to Network...', progress: 20 },
       { time: 1200, text: 'Verifying Identity Keys...', progress: 45 },
       { time: 2000, text: 'Syncing Social Graph...', progress: 70 },
       { time: 2800, text: 'Decryption Complete.', progress: 90 },

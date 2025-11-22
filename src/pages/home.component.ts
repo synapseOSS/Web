@@ -6,21 +6,27 @@ import { IconComponent } from '../components/icon.component';
 import { PlatformCardComponent } from '../components/platform-card.component';
 import { AnimateOnScrollDirective } from '../directives/animate-on-scroll.directive';
 import { PlatformService, PlatformInfo } from '../services/platform.service';
-import { ParticlesComponent } from '../components/particles.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterModule, IconComponent, PlatformCardComponent, AnimateOnScrollDirective, ParticlesComponent],
+  imports: [CommonModule, RouterModule, IconComponent, PlatformCardComponent, AnimateOnScrollDirective],
+  styles: [`
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+
+    .animate-blink {
+      animation: blink 1s infinite;
+    }
+  `],
   template: `
     <div class="relative min-h-screen overflow-x-hidden">
       <!-- Hero Section -->
       <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32">
         <!-- Background Elements (Parallax + Animation) -->
         <div class="absolute inset-0 -z-10 overflow-hidden">
-          
-          <!-- Interactive Particles (New) -->
-          <app-particles class="z-0 opacity-60 dark:opacity-80"></app-particles>
 
           <!-- Blob 1 (Top Center - Indigo) -->
           <div [style.transform]="bgBlob1Transform()" 
@@ -92,7 +98,7 @@ import { ParticlesComponent } from '../components/particles.component';
                 </div>
                 
                 <p class="text-sm text-slate-600 dark:text-slate-300 mb-auto text-left leading-relaxed">
-                  Experience the first fully decentralized social web app with zero latency neural syncing.
+                  Experience the first fully decentralized social web app with instant synchronization.
                 </p>
 
                 <div class="flex gap-2 mt-2">
@@ -106,15 +112,17 @@ import { ParticlesComponent } from '../components/particles.component';
           </div>
 
           <h1 appAnimateOnScroll animation="zoom-in" [delay]="200" class="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-8 leading-tight text-slate-900 dark:text-white transition-all duration-500 relative pointer-events-none">
-            The Open Source <br/>
+            The Social Network <br/>
             <span class="text-transparent bg-clip-text bg-gradient-to-r animate-gradient bg-300%
                          from-indigo-600 via-cyan-500 to-indigo-600
-                         dark:from-indigo-400 dark:via-cyan-400 dark:to-indigo-400">Social Operating System</span>
+                         dark:from-indigo-400 dark:via-cyan-400 dark:to-indigo-400">You Own</span>
           </h1>
 
-          <p appAnimateOnScroll animation="fade-up" [delay]="400" class="text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed text-slate-600 dark:text-slate-400 relative pointer-events-none">
-            Connect, share, and discover without the algorithms. Synapse is the all-in-one alternative to Facebook, Instagram, and X — built by the community, for the community.
-          </p>
+          <div appAnimateOnScroll animation="fade-up" [delay]="400" class="text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed text-slate-600 dark:text-slate-400 relative pointer-events-none min-h-[4rem]">
+            <p class="text-center">
+              {{ typedText() }}<img src="https://antigravity.google/assets/image/antigravity-cursor.png" alt="cursor" class="inline-block ml-1 animate-blink" style="height: 1em; width: auto; vertical-align: text-bottom;" />
+            </p>
+          </div>
 
           <div appAnimateOnScroll animation="fade-up" [delay]="600" class="flex flex-col sm:flex-row items-center justify-center gap-8 relative z-20">
             <a href="https://github.com/SynapseOSS" target="_blank" class="w-full sm:w-auto px-8 py-4 rounded-full font-bold transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shadow-lg 
@@ -449,7 +457,7 @@ import { ParticlesComponent } from '../components/particles.component';
                             Synapse Protocol v2.1 Release Candidate
                          </h4>
                          <p class="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-                            Introducing "Neural Sync" with 50% faster propagation speeds.
+                            Introducing faster sync with 50% improved propagation speeds.
                          </p>
                       </div>
   
@@ -514,11 +522,19 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (typeof window !== 'undefined') {
       window.addEventListener('scroll', this.onScroll, { passive: true });
     }
+
+    // Start typing animation after a short delay
+    setTimeout(() => {
+      this.startTyping();
+    }, 800);
   }
 
   ngOnDestroy() {
     if (typeof window !== 'undefined') {
       window.removeEventListener('scroll', this.onScroll);
+    }
+    if (this.typingInterval) {
+      clearInterval(this.typingInterval);
     }
   }
 
@@ -569,4 +585,47 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Moves diagonally
     return `translate3d(-20%, ${y * 0.15}px, 0)`;
   });
+
+  // Typing animation with multiple rotating texts
+  typedText = signal('');
+  private texts = [
+    'No ads. No tracking. No corporate control. Just authentic connections.',
+    'Your data, your rules, your network—built on open source technology.',
+    'Connect freely, share securely, and own your digital identity forever.',
+    'Where privacy meets community in a truly decentralized experience.',
+    'Built by the community, owned by you, powered by transparency.'
+  ];
+  private currentTextIndex = 0;
+  private typingInterval: any;
+  private currentCharIndex = 0;
+  private isDeleting = false;
+
+  private startTyping() {
+    this.typingInterval = setInterval(() => {
+      const currentText = this.texts[this.currentTextIndex];
+      
+      if (!this.isDeleting) {
+        // Typing forward
+        if (this.currentCharIndex < currentText.length) {
+          this.typedText.set(currentText.substring(0, this.currentCharIndex + 1));
+          this.currentCharIndex++;
+        } else {
+          // Pause at the end before deleting
+          setTimeout(() => {
+            this.isDeleting = true;
+          }, 2000);
+        }
+      } else {
+        // Deleting backward
+        if (this.currentCharIndex > 0) {
+          this.typedText.set(currentText.substring(0, this.currentCharIndex - 1));
+          this.currentCharIndex--;
+        } else {
+          // Move to next text
+          this.isDeleting = false;
+          this.currentTextIndex = (this.currentTextIndex + 1) % this.texts.length;
+        }
+      }
+    }, this.isDeleting ? 30 : 50); // Faster when deleting
+  }
 }

@@ -27,15 +27,15 @@ import { NotificationsComponent } from './pages/notifications.component';
 
 export const routes: Routes = [
   // Settings Page (Standalone, No Layout)
-  { 
-    path: 'app/settings', 
+  {
+    path: 'app/settings',
     component: SettingsComponent,
     canActivate: [authGuard]
   },
 
   // Web App Routes (Protected, No Landing Navbar/Footer)
-  { 
-    path: 'app', 
+  {
+    path: 'app',
     component: AppLayoutComponent,
     canActivate: [authGuard],
     children: [
@@ -72,7 +72,7 @@ export const routes: Routes = [
       { path: 'admin', component: AdminComponent, canActivate: [authGuard] },
     ]
   },
-  
+
   // Fallback
   { path: '**', redirectTo: '' }
 ];
