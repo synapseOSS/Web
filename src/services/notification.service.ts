@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, effect } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { AuthService } from './auth.service';
 import { RealtimeService } from './realtime.service';
@@ -34,7 +34,8 @@ export class NotificationService {
 
   constructor() {
     // Subscribe to real-time notifications when user is authenticated
-    this.auth.currentUser.subscribe(user => {
+    effect(() => {
+      const user = this.auth.currentUser();
       if (user) {
         this.subscribeToNotifications(user.id);
         this.fetchNotifications();
@@ -46,7 +47,7 @@ export class NotificationService {
     this.realtime.subscribeToNotifications(userId, (newNotification) => {
       this.notifications.update(notifs => [newNotification, ...notifs]);
       this.unreadCount.update(count => count + 1);
-      
+
       // Show browser notification if permission granted
       this.showBrowserNotification(newNotification);
     });
@@ -156,7 +157,7 @@ export class NotificationService {
     };
 
     const n = new Notification('Synapse', options);
-    
+
     n.onclick = () => {
       window.focus();
       window.location.href = options.data.url;

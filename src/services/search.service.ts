@@ -11,7 +11,7 @@ export interface SearchResult {
 })
 export class SearchService {
   private supabase = inject(SupabaseService).client;
-  
+
   searchResults = signal<SearchResult[]>([]);
   loading = signal(false);
   recentSearches = signal<string[]>([]);
@@ -126,6 +126,44 @@ export class SearchService {
       return (posts || []).map((p: any) => p.posts);
     } catch (err) {
       console.error('Error searching hashtag:', err);
+      return [];
+    }
+  }
+
+  async searchPosts(query: string) {
+    try {
+      const { data, error } = await this.supabase
+        .from('posts')
+        .select(`
+          *,
+          users:author_uid (
+            uid,
+            username,
+            display_name,
+            avatar,
+            verify
+          )
+        `)
+        .ilike('post_text', `%${query}%`)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+
+      return (data || []).map((post: any) => ({
+        id: post.id,
+        author_uid: post.author_uid,
+        user: post.users,
+        post_text: post.post_text || '',
+        media: post.media_items || [],
+        likes_count: post.likes_count || 0,
+        comments_count: post.comments_count || 0,
+        views_count: post.views_count || 0,
+        created_at: post.created_at,
+        post_type: post.post_type || 'TEXT'
+      }));
+    } catch (err) {
+      console.error('Error searching posts:', err);
       return [];
     }
   }

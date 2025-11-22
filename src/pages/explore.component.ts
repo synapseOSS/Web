@@ -266,14 +266,14 @@ export class ExploreComponent implements OnInit {
   async loadTrendingContent() {
     // Load trending posts (sorted by engagement)
     const allPosts = this.socialService.getPosts();
-    
+
     // Sort by engagement score (likes + comments * 2)
     const trending = [...allPosts].sort((a, b) => {
       const scoreA = a.likes_count + (a.comments_count * 2);
       const scoreB = b.likes_count + (b.comments_count * 2);
       return scoreB - scoreA;
     }).slice(0, 10);
-    
+
     this.trendingPosts.set(trending);
 
     // Load suggested users
@@ -284,7 +284,12 @@ export class ExploreComponent implements OnInit {
     this.videoPosts.set(allPosts.filter(p => p.post_type === 'VIDEO').slice(0, 10));
 
     // Fetch trending hashtags from service
-    await this.hashtagService.fetchTrendingHashtags();
+    const hashtags = await this.hashtagService.getTrendingHashtags();
+    this.trendingHashtags.set(hashtags.map(h => ({
+      tag: h.tag,
+      count: h.usage_count,
+      growth: 0
+    })));
   }
 
   async onSearch() {
